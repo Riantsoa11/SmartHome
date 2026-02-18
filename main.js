@@ -3,6 +3,11 @@ const path = require('path');
 
 let mainWindow;
 
+ipcMain.on('open-external', (event, url) => {
+    shell.openExternal(url);
+});
+
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1600,
@@ -41,6 +46,8 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
+
 
 // ========== IPC HANDLERS ==========
 
@@ -287,3 +294,5 @@ ipcMain.on('notify', (event, message) => {
 ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url);
 });
+
+
