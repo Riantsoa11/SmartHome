@@ -45,4 +45,5 @@ Architecture MVVM :
 git clone https://github.com/Riantsoa11/SmartHome.git
 cd SmartHome
 npm install
+npm install electron --save-dev
 npm start
