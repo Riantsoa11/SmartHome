@@ -1,0 +1,25 @@
+{
+  "name": "smarthome",
+  "version": "1.0.0",
+  "description": "Application Desktop SmartHome en Electron (MVVM)",
+  "main": "main.js",
+  "scripts": {
+  "start": "electron ."
+  },
+
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Riantsoa11/SmartHome.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Riantsoa11/SmartHome/issues"
+  },
+  "homepage": "https://github.com/Riantsoa11/SmartHome#readme",
+  "devDependencies": {
+    "electron": "^40.4.1"
+  }
+}
