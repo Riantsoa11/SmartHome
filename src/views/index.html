@@ -2,12 +2,10 @@
 <html>
 <head>
   <meta charset="UTF-8" />
+
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self';
-                 script-src 'self';
-                 style-src 'self' 'unsafe-inline';
-                 img-src 'self' https: data:;
-                 connect-src 'self' https:;">
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
+
   <title>SmartHome</title>
   <link rel="stylesheet" href="../styles.css" />
 </head>
@@ -114,14 +112,130 @@
       </div>
     </section>
  
-    <!-- ENERGY -->
-    <section class="card">
-        <h2>Energy</h2>
-        <div id="energy-chart"></div>
-    </section>
-
   </main>
  
+    <!-- ===== BOTTOM DARK SECTION ===== -->
+<section class="bottom-dark">
+ 
+  <!-- LEFT : DAILY NEWS -->
+  <div class="daily-news">
+    <div class="news-header">
+      <div class="news-icon">📰</div>
+      <h2>Daily News</h2>
+    </div>
+ 
+    <div class="news-item">
+      <h3>Smart Home Market Expected to Grow 25% This Year</h3>
+      <div class="news-info">
+        <span>Tech News</span>
+        <span>2 hours ago</span>
+      </div>
+      <span class="badge tech">Technology</span>
+    </div>
+ 
+    <div class="news-item">
+      <h3>New Energy Saving Tips: Reduce Bills by 30%</h3>
+      <div class="news-info">
+        <span>Green Living</span>
+        <span>5 hours ago</span>
+      </div>
+      <span class="badge life">Lifestyle</span>
+    </div>
+ 
+    <div class="news-item">
+      <h3>IoT Security: Best Practices for Smart Homes</h3>
+      <div class="news-info">
+        <span>Security Today</span>
+        <span>8 hours ago</span>
+      </div>
+      <span class="badge security">Security</span>
+    </div>
+  </div>
+ 
+  <!-- RIGHT : SYSTEM OVERVIEW -->
+  <div class="system-box">
+    <h2>System Overview</h2>
+ 
+    <div class="overview-grid">
+ 
+      <div class="overview-card">
+        <div class="icon green">📈</div>
+        <div>
+          <h3>24</h3>
+          <p>Active Devices</p>
+        </div>
+      </div>
+ 
+      <div class="overview-card">
+        <div class="icon blue">📶</div>
+        <div>
+          <h3>Stable</h3>
+          <p>Network Status</p>
+        </div>
+      </div>
+ 
+      <div class="overview-card">
+        <div class="icon orange">⚠</div>
+        <div>
+          <h3>2</h3>
+          <p>Alerts</p>
+        </div>
+      </div>
+ 
+    </div>
+  </div>
+ 
+</section>
+ 
+<!-- ===== ENERGY USAGE SECTION ===== -->
+<section class="energy-usage">
+  <h2>Energy Usage</h2>
+  <p class="subtitle">Today's consumption</p>
+ 
+  <!-- Graph area with labels -->
+  <div class="graph-container">
+    <!-- Y-axis labels -->
+    <div class="y-axis">
+      <span>0 kWh</span>
+      <span>2 kWh</span>
+      <span>4 kWh</span>
+      <span>6 kWh</span>
+      <span>8 kWh</span>
+    </div>
+ 
+    <!-- Graph bars and X-axis -->
+    <div class="graph-content">
+      <div class="bars">
+        <div class="bar" style="height: 20%;"></div>
+        <div class="bar" style="height: 45%;"></div>
+        <div class="bar" style="height: 70%;"></div>
+        <div class="bar" style="height: 90%;"></div>
+        <div class="bar" style="height: 60%;"></div>
+        <div class="bar" style="height: 40%;"></div>
+        <div class="bar" style="height: 25%;"></div>
+      </div>
+ 
+      <div class="x-axis">
+        <span>00:00</span>
+        <span>04:00</span>
+        <span>08:00</span>
+        <span>12:00</span>
+        <span>16:00</span>
+        <span>20:00</span>
+        <span>24:00</span>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Stats footer -->
+  <div class="energy-stats">
+    <div class="total">45.8 kWh</div>
+    <div class="comparison">↓ 12% vs yesterday</div>
+  </div>
+</section>
+ 
 <script type="module" src="../renderer.js"></script>
+
 </body>
 </html>
+ 
