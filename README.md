@@ -47,3 +47,8 @@ cd SmartHome
 npm install
 npm install electron --save-dev
 npm start
+
+!["Design de l'application"](assets/image1.png)
+!["Design de l'application"](assets/image2.png)
+!["Design de l'application"](assets/image3.png)
+
