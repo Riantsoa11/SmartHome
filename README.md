@@ -3,6 +3,11 @@
 Application Desktop de gestion d'appareils connectés développée avec Electron en architecture MVVM.
 
 ---
+## 📄 Auteur
+ANDRIANASOLOHARISON Tsiory
+El  KAROUI Yael ()
+Kouakou Elie Marc
+
 
 ## 📄 Description
 
