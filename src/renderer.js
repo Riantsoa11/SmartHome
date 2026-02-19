@@ -41,6 +41,39 @@ async function renderEnergyChart() {
 }
 
 /* ===========================
+Horloge
+=========================== */
+/* ===========================
+   Horloge
+=========================== */
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = now.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+
+  const hStr = String(h).padStart(2, '0');
+  const mStr = String(m).padStart(2, '0');
+
+  document.getElementById('hours').innerHTML =
+    `<span class="d1">${hStr[0]}</span><span class="d2">${hStr[1]}</span>`;
+  document.getElementById('minutes').innerHTML =
+    `<span class="d1">${mStr[0]}</span><span class="d2">${mStr[1]}</span>`;
+
+  document.getElementById('ampm').textContent = ampm;
+
+  const days = ['DIMANCHE','LUNDI','MARDI','MERCREDI','JEUDI','VENDREDI','SAMEDI'];
+  const months = ['JANVIER','FÉVRIER','MARS','AVRIL','MAI','JUIN','JUILLET',
+                  'AOÛT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DÉCEMBRE'];
+  document.getElementById('clock-date').textContent =
+    `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+// ← Ces deux lignes manquaient !
+updateClock();
+setInterval(updateClock, 1000);
+/* ===========================
    CLIMATE
 =========================== */
 async function renderClimateControls() {

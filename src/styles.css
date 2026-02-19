@@ -5,7 +5,7 @@ body {
     color: white;
   }
  
-  /* TOPBAR */
+  /* 
   .topbar {
     display: flex;
     justify-content: space-between;
@@ -46,6 +46,7 @@ body {
     align-items:center;
     justify-content:center;
   }
+  */
  
   /* DASHBOARD */
   .dashboard {
@@ -67,42 +68,269 @@ body {
     margin-bottom: 20px;
   }
  
+  /* Horloge*/
+  .dashboard-clock {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f1b3d, #14285c);
+}
+
+.clock-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.clock-date {
+  font-size: 25px;
+  letter-spacing: 10px;
+  opacity: 0.35;
+  text-transform: uppercase;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+}
+
+.ampm {
+  font-size: 12px;
+  color: #4da3ff;
+  letter-spacing: 5px;
+  font-weight: 600;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.flip-clock {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.time-box {
+  width:450px;
+  height: 400px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(20px);
+  color: white;
+  font-size: 130px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.time-box::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+}
+
+.time-box .d1 {
+  font-size: 245px;
+  font-weight: 900;
+  font-family: 'Satoshi', sans-serif;
+  opacity: 0.7;        /* légèrement atténué pour renforcer le contraste */
+}
+
+.time-box .d2 {
+  font-size: 245px;
+  font-weight: 900;
+  font-family: 'Satoshi', sans-serif;
+}
+
+/* Séparateur : deux dots bleus */
+.time-sep {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.time-sep::before,
+.time-sep::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #4da3ff;
+  opacity: 0.8;
+}
+
+.clock-stats {
+  display: flex;
+  gap: 60px;
+  margin-top: 24px;
+}
+
+.clock-stat {
+  text-align: center;
+}
+
+.clock-stat .val {
+  font-size: 22px;
+  font-weight: 700;
+  color: #4da3ff;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.clock-stat .lbl {
+  font-size: 10px;
+  opacity: 0.35;
+  letter-spacing: 2px;
+  margin-top: 5px;
+  font-family: 'Segoe UI', sans-serif;
+  text-transform: uppercase;
+}
+  
   /* LIGHTS */
-  .device-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-  }
- 
-  .device {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    border-radius: 15px;
-    transition: 0.3s;
-    cursor: pointer;
-  }
- 
-  .device.active {
-    background: #1f4fff;
-  }
- 
-  .device:hover {
-    transform: translateY(-3px);
-  }
+  .lights-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.add-btn {
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.light-card {
+  background: rgba(255,255,255,0.05);
+  padding: 20px;
+  border-radius: 18px;
+  transition: 0.3s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 130px;
+}
+
+.light-card.active {
+  background: linear-gradient(145deg, #1f4fff, #163caa);
+}
+
+.light-card:hover {
+  transform: translateY(-4px);
+}
+
+.light-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.light-icon {
+  font-size: 22px;
+  opacity: 0.8;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+}
+
+.status-dot.on {
+  background: #4da3ff;
+}
+
+.light-name {
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.light-value {
+  margin-top: 5px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
  
   /* BLINDS */
+    .blinds-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .blind-card {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  .blind-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .percent {
+    opacity: 0.6;
+  }
+
+  /* Progress Bar */
   .progress {
     background: rgba(255,255,255,0.1);
     height: 8px;
     border-radius: 10px;
-    margin-top: 8px;
+    margin: 10px 0 15px 0;
+    overflow: hidden;
   }
- 
+
   .progress div {
-    background: #1f9dff;
     height: 100%;
+    background: linear-gradient(to right, #1f9dff, #00c6ff);
     border-radius: 10px;
   }
+
+  /* Buttons */
+  .blind-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .blind-btn {
+    flex: 1;
+    padding: 8px 0;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+
+  .blind-btn:hover {
+    background: rgba(255,255,255,0.15);
+  }
+
  
   /* CLIMATE */
   .climate {
@@ -395,3 +623,71 @@ body {
       padding-right: 0;
     }
   }
+
+  .weather-card {
+  text-align: center;
+}
+
+.weather-main {
+  margin: 25px 0;
+}
+
+.weather-icon {
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 20px auto;
+  border-radius: 50%;
+  background: rgba(0, 140, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 45px;
+  color: #4da3ff;
+}
+
+.weather-temp {
+  font-size: 42px;
+  font-weight: 600;
+}
+
+.weather-desc {
+  font-size: 14px;
+  opacity: 0.7;
+  margin-top: 5px;
+}
+
+.weather-stats {
+  margin-top: 20px;
+}
+
+.weather-stats .stat {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.05);
+  padding: 12px 18px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.weather-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  margin: 20px 0;
+}
+
+.forecast h3 {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-bottom: 15px;
+}
+
+.forecast-days {
+  display: flex;
+  justify-content: space-between;
+}
+
+.forecast-day {
+  font-size: 12px;
+  text-align: center;
+}

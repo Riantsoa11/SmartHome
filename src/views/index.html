@@ -12,7 +12,7 @@
 
 <body>
  
-  <header class="topbar">
+  <!-- <header class="topbar">
     <div class="logo">SmartHome</div>
  
     <div class="datetime">
@@ -31,54 +31,138 @@
         <div class="role">Admin</div>
       </div>
     </div>
-  </header>
- 
+  </header> -->
+  
+  <!-- SCREENSAVER CLOCK -->
+  <section class="dashboard-clock">
+    <div class="clock-wrapper">
+      <div class="clock-date" id="clock-date">MERCREDI 18 FÉVRIER 2026</div>
+      <div class="ampm" id="ampm">PM</div>
+      <div class="flip-clock">
+        <div class="time-box" id="hours"><span class="d1">0</span><span class="d2">9</span></div>
+        <div class="time-sep"></div>
+        <div class="time-box" id="minutes"><span class="d1">3</span><span class="d2">9</span></div>
+      </div>
+      <div class="clock-stats">
+        <div class="clock-stat">
+          <div class="val">24</div>
+          <div class="lbl">APPAREILS ACTIFS</div>
+        </div>
+        <div class="clock-stat">
+          <div class="val">22°C</div>
+          <div class="lbl">TEMPÉRATURE</div>
+        </div>
+        <div class="clock-stat">
+          <div class="val">2</div>
+          <div class="lbl">ALERTES</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <main class="dashboard">
  
     <!-- LIGHTS -->
-    <section class="card">
-      <h2>Lights</h2>
+    <section class="card lights-card">
+      <div class="card-header">
+        <h2>Lights</h2>
+        <span class="add-btn">+</span>
+      </div>
+
       <div class="device-grid">
-        <div class="device active">
-          <p>Living Room</p>
-          <span>75%</span>
+
+        <div class="light-card active">
+          <div class="light-top">
+            <div class="light-icon">💡</div>
+            <div class="status-dot on"></div>
+          </div>
+          <div class="light-name">Living<br>Room</div>
+          <div class="light-value">75%</div>
         </div>
- 
-        <div class="device">
-          <p>Bedroom</p>
+
+        <div class="light-card">
+          <div class="light-top">
+            <div class="light-icon">💡</div>
+            <div class="status-dot"></div>
+          </div>
+          <div class="light-name">Bedroom</div>
         </div>
- 
-        <div class="device active">
-          <p>Kitchen</p>
-          <span>100%</span>
+
+        <div class="light-card active">
+          <div class="light-top">
+            <div class="light-icon">💡</div>
+            <div class="status-dot on"></div>
+          </div>
+          <div class="light-name">Kitchen</div>
+          <div class="light-value">100%</div>
         </div>
- 
-        <div class="device">
-          <p>Bathroom</p>
+
+        <div class="light-card">
+          <div class="light-top">
+            <div class="light-icon">💡</div>
+            <div class="status-dot"></div>
+          </div>
+          <div class="light-name">Bathroom</div>
         </div>
+
       </div>
     </section>
+
  
     <!-- BLINDS -->
-    <section class="card">
+    <section class="card blinds-card">
       <h2>Blinds</h2>
- 
-      <div class="blind">
-        <p>Living Room - 100%</p>
-        <div class="progress"><div style="width:100%"></div></div>
+
+      <div class="blind-card">
+        <div class="blind-header">
+          <span>Living Room</span>
+          <span class="percent">100%</span>
+        </div>
+
+        <div class="progress">
+          <div style="width:100%"></div>
+        </div>
+
+        <div class="blind-actions">
+          <button class="blind-btn">⬆ Open</button>
+          <button class="blind-btn">⬇ Close</button>
+        </div>
       </div>
- 
-      <div class="blind">
-        <p>Bedroom - 50%</p>
-        <div class="progress"><div style="width:50%"></div></div>
+
+      <div class="blind-card">
+        <div class="blind-header">
+          <span>Bedroom</span>
+          <span class="percent">50%</span>
+        </div>
+
+        <div class="progress">
+          <div style="width:50%"></div>
+        </div>
+
+        <div class="blind-actions">
+          <button class="blind-btn">⬆ Open</button>
+          <button class="blind-btn">⬇ Close</button>
+        </div>
       </div>
- 
-      <div class="blind">
-        <p>Kitchen - 0%</p>
-        <div class="progress"><div style="width:0%"></div></div>
+
+      <div class="blind-card">
+        <div class="blind-header">
+          <span>Kitchen</span>
+          <span class="percent">0%</span>
+        </div>
+
+        <div class="progress">
+          <div style="width:0%"></div>
+        </div>
+
+        <div class="blind-actions">
+          <button class="blind-btn">⬆ Open</button>
+          <button class="blind-btn">⬇ Close</button>
+        </div>
       </div>
- 
+
     </section>
+
  
     <!-- CLIMATE -->
     <section class="card climate">
@@ -100,17 +184,69 @@
       </div>
     </section>
  
-    <!-- WEATHER -->
-    <section class="card">
+    <section class="card weather-card">
       <h2>Weather</h2>
-      <div class="weather-temp">23°C</div>
-      <p>Partly Cloudy</p>
- 
+
+      <!-- Weather Main Info -->
+      <div class="weather-main">
+        <div class="weather-icon">
+          <span>☁</span>
+        </div>
+
+        <div class="weather-temp">23°C</div>
+        <div class="weather-desc">Partly Cloudy</div>
+      </div>
+
+      <!-- Stats -->
       <div class="weather-stats">
-        <div>Humidity: 65%</div>
-        <div>Wind: 12 km/h</div>
+        <div class="stat">
+          <span>💧 Humidity</span>
+          <span>65%</span>
+        </div>
+
+        <div class="stat">
+          <span>🌬 Wind Speed</span>
+          <span>12 km/h</span>
+        </div>
+      </div>
+
+      <hr class="weather-divider" />
+
+      <!-- Forecast -->
+      <div class="forecast">
+        <h3>5-DAY FORECAST</h3>
+
+        <div class="forecast-days">
+          <div class="forecast-day">
+            <span>Mon</span>
+            <div>☁</div>
+            <span>24°</span>
+          </div>
+          <div class="forecast-day">
+            <span>Tue</span>
+            <div>☁</div>
+            <span>23°</span>
+          </div>
+          <div class="forecast-day">
+            <span>Wed</span>
+            <div>☁</div>
+            <span>22°</span>
+          </div>
+          <div class="forecast-day">
+            <span>Thu</span>
+            <div>☁</div>
+            <span>21°</span>
+          </div>
+          <div class="forecast-day">
+            <span>Fri</span>
+            <div>☁</div>
+            <span>20°</span>
+          </div>
+        </div>
       </div>
     </section>
+
+
  
   </main>
  
