@@ -1,377 +1,869 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
-
+        content="default-src 'self' 'unsafe-inline' https://api.open-meteo.com https://api.allorigins.win https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src *;">
   <title>SmartHome</title>
-  <link rel="stylesheet" href="../styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0a0c10; --surface:#111318; --surface2:#181c24;
+      --border:#1e2530; --accent:#4fffb0; --accent2:#00bfff;
+      --warn:#ff6b35; --purple:#a78bfa;
+      --text:#e8edf5; --muted:#5a6478; --radius:14px;
+      --sidebar:64px; --topbar:52px;
+    }
+    html, body { height:100%; overflow:hidden; }
+    body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; display:flex; flex-direction:column; }
+
+
+
+    /* TOPBAR */
+    .topbar {
+      height:var(--topbar); flex-shrink:0;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 20px 0 calc(var(--sidebar) + 20px);
+      background:var(--surface); border-bottom:1px solid var(--border); z-index:50;
+    }
+    .logo { font-family:'Space Mono',monospace; font-size:13px; font-weight:700; letter-spacing:4px; color:var(--accent); }
+    .topbar-right { display:flex; align-items:center; gap:20px; }
+    .topbar-clock { font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); }
+    .online-badge { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+    .dot-pulse { width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 5px var(--accent); animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* APP BODY */
+    .app-body { flex:1; display:flex; overflow:hidden; height:calc(100vh - var(--topbar)); }
+
+    /* SIDEBAR */
+    .sidebar {
+      width:var(--sidebar); flex-shrink:0;
+      background:var(--surface); border-right:1px solid var(--border);
+      display:flex; flex-direction:column; align-items:center;
+      padding:16px 0; gap:6px; z-index:40;
+    }
+    .nav-btn {
+      width:42px; height:42px; border-radius:10px; border:none;
+      background:transparent; color:var(--muted); font-size:18px;
+      cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center;
+      position:relative;
+    }
+    .nav-btn:hover { background:var(--surface2); color:var(--text); }
+    .nav-btn.active { background:rgba(79,255,176,.12); color:var(--accent); box-shadow:inset 0 0 0 1px rgba(79,255,176,.25); }
+    .tooltip {
+      position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%);
+      background:var(--surface2); border:1px solid var(--border); border-radius:6px;
+      padding:4px 10px; font-size:11px; white-space:nowrap; pointer-events:none;
+      opacity:0; transition:opacity .15s; font-family:'Space Mono',monospace; color:var(--text);
+    }
+    .nav-btn:hover .tooltip { opacity:1; }
+
+    /* PAGES */
+    .pages { flex:1; overflow:hidden; position:relative; }
+    .page {
+      position:absolute; inset:0; overflow-y:auto; overflow-x:hidden;
+      opacity:0; pointer-events:none; transform:translateY(8px);
+      transition:opacity .25s,transform .25s; padding:20px;
+    }
+    .page.active { opacity:1; pointer-events:all; transform:translateY(0); }
+
+    /* CARD */
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+    .card-title { font-size:10px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+
+    /* ---- PAGE HOME ---- */
+    #page-home { display:none; flex-direction:column; gap:0; padding:0 !important; height:100%; overflow:hidden; }
+    #page-home.active { display:flex; }
+
+    .dash-greeting {
+      padding:14px 20px 10px;
+      font-size:18px; font-weight:800; color:var(--text); flex-shrink:0;
+    }
+    .dash-greeting span { color:var(--accent); }
+
+    .dash-grid {
+      flex:1; display:grid; min-height:0;
+      grid-template-columns: 260px 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap:12px; padding:0 12px 12px;
+    }
+
+    /* Card base */
+    .dc { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; position:relative; transition:border-color .2s; }
+    .dc:hover { border-color:var(--muted); }
+
+    /* CLOCK card — spans 2 rows */
+    .dc-clock { grid-column:1; grid-row:1/3; display:flex; flex-direction:column; justify-content:space-between; padding:20px; background:linear-gradient(160deg,#0d1117,#0f1a2e); }
+    .dc-clock-greeting { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+    .dc-clock-time { font-family:'Space Mono',monospace; font-size:64px; font-weight:700; color:var(--text); line-height:1; }
+    .dc-clock-sep { color:var(--accent); animation:blink 1s step-end infinite; }
+    @keyframes blink{0%,100%{opacity:.8}50%{opacity:.1}}
+    .dc-clock-date { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); margin-top:4px; }
+    .dc-clock-stats { display:flex; flex-direction:column; gap:8px; }
+    .dc-stat-row { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:9px 14px; }
+    .dc-stat-lbl { font-size:11px; color:var(--muted); }
+    .dc-stat-val { font-family:'Space Mono',monospace; font-size:13px; font-weight:700; color:var(--accent); }
+
+    /* WEATHER card */
+    .dc-weather { grid-column:2; grid-row:1; padding:18px; display:flex; flex-direction:column; gap:10px; }
+    .dc-weather-top { display:flex; align-items:center; gap:14px; }
+    .dc-w-icon { font-size:48px; flex-shrink:0; }
+    .dc-w-main {}
+    .dc-w-desc { font-size:13px; color:var(--muted); letter-spacing:.5px; }
+    .dc-w-temp { font-family:'Space Mono',monospace; font-size:40px; font-weight:700; line-height:1; }
+    .dc-w-loc { font-size:9px; letter-spacing:3px; color:var(--accent); text-transform:uppercase; margin-top:3px; }
+    .dc-weather-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+    .dc-ws { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 10px; }
+    .dc-ws-lbl { font-size:9px; color:var(--muted); letter-spacing:1px; margin-bottom:3px; }
+    .dc-ws-val { font-family:'Space Mono',monospace; font-size:13px; }
+    .dc-forecast { display:flex; gap:6px; }
+    .dc-fc { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 4px; text-align:center; }
+    .dc-fc-day { font-family:'Space Mono',monospace; font-size:8px; color:var(--muted); }
+    .dc-fc-ico { font-size:16px; margin:3px 0; }
+    .dc-fc-tmp { font-family:'Space Mono',monospace; font-size:9px; color:var(--text); }
+
+    /* LIGHTS card */
+    .dc-lights { grid-column:3; grid-row:1; padding:18px; display:flex; flex-direction:column; gap:10px; }
+    .dc-section-title { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+    .dc-lights-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; flex:1; align-content:start; }
+    .dc-light { background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:10px 8px; cursor:pointer; transition:all .18s; text-align:center; }
+    .dc-light.on { border-color:var(--accent); background:rgba(79,255,176,.06); }
+    .dc-light:hover { transform:translateY(-2px); }
+    .dc-light-ico { font-size:22px; margin-bottom:5px; }
+    .dc-light-name { font-size:10px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dc-light-val { font-family:'Space Mono',monospace; font-size:9px; color:var(--accent); margin-top:2px; }
+    .dc-light-off { font-size:9px; color:var(--muted); margin-top:2px; }
+
+    /* ENERGY card */
+    .dc-energy { grid-column:2; grid-row:2; padding:18px; display:flex; flex-direction:column; gap:10px; }
+    .dc-energy-big { font-family:'Space Mono',monospace; font-size:36px; font-weight:700; color:var(--text); line-height:1; }
+    .dc-energy-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+    .dc-energy-badge { display:inline-block; font-family:'Space Mono',monospace; font-size:10px; color:var(--accent); background:rgba(79,255,176,.1); border:1px solid rgba(79,255,176,.2); border-radius:5px; padding:2px 8px; margin-top:4px; }
+    .dc-mini-graph { flex:1; display:flex; align-items:flex-end; gap:4px; min-height:0; }
+    .dc-bar { flex:1; border-radius:3px 3px 0 0; background:var(--accent); opacity:.6; min-height:4px; transition:opacity .2s; cursor:pointer; }
+    .dc-bar:hover { opacity:1; }
+    .dc-energy-row { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+    .dc-estat { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 10px; }
+    .dc-estat-lbl { font-size:9px; color:var(--muted); }
+    .dc-estat-val { font-family:'Space Mono',monospace; font-size:13px; font-weight:700; margin-top:2px; }
+
+    /* SUMMARY card (climate + blinds + news headline) */
+    .dc-summary { grid-column:3; grid-row:2; padding:18px; display:flex; flex-direction:column; gap:12px; }
+    .dc-clim-row { display:flex; align-items:center; gap:14px; }
+    .dc-clim-circle { width:68px; height:68px; border-radius:50%; border:2px solid var(--accent); box-shadow:0 0 18px rgba(79,255,176,.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .dc-clim-temp { font-family:'Space Mono',monospace; font-size:20px; font-weight:700; color:var(--accent); }
+    .dc-clim-info { flex:1; }
+    .dc-clim-lbl { font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+    .dc-clim-mode { font-size:11px; color:var(--accent2); margin-top:3px; font-family:'Space Mono',monospace; }
+    .dc-blinds-row { display:flex; flex-direction:column; gap:5px; }
+    .dc-blind-mini { display:flex; align-items:center; gap:8px; font-size:11px; }
+    .dc-blind-name { width:70px; color:var(--muted); font-size:10px; flex-shrink:0; }
+    .dc-blind-bar { flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .dc-blind-fill { height:100%; background:var(--accent2); border-radius:2px; }
+    .dc-blind-pct { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); width:30px; text-align:right; flex-shrink:0; }
+    .dc-news-latest { background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:10px 12px; flex:1; overflow:hidden; }
+    .dc-news-tag { font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--accent2); margin-bottom:5px; }
+    .dc-news-title { font-size:11px; font-weight:600; line-height:1.5; color:var(--text); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .dc-news-src { font-size:9px; color:var(--muted); font-family:'Space Mono',monospace; margin-top:5px; }
+
+    /* ---- PAGE DEVICES ---- */
+    #page-devices { display:none; flex-direction:column; gap:16px; }
+    #page-devices.active { display:flex; }
+    .devices-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
+    .big-device-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; cursor:pointer; transition:all .2s; }
+    .big-device-card.on { border-color:var(--accent); background:rgba(79,255,176,.05); box-shadow:0 0 20px rgba(79,255,176,.05); }
+    .big-device-card:hover { transform:translateY(-2px); }
+    .bd-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .bd-icon { font-size:24px; }
+    .bd-toggle { width:34px; height:18px; border-radius:9px; border:none; background:var(--border); cursor:pointer; position:relative; transition:background .2s; }
+    .bd-toggle::after { content:''; position:absolute; top:3px; left:3px; width:12px; height:12px; border-radius:50%; background:var(--muted); transition:all .2s; }
+    .big-device-card.on .bd-toggle { background:rgba(79,255,176,.3); }
+    .big-device-card.on .bd-toggle::after { left:19px; background:var(--accent); }
+    .bd-name { font-size:13px; font-weight:600; margin-bottom:3px; }
+    .bd-room { font-size:10px; color:var(--muted); }
+    .bd-val { font-family:'Space Mono',monospace; font-size:11px; color:var(--accent); margin-top:8px; }
+    .devices-section-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .blinds-list { display:flex; flex-direction:column; gap:10px; }
+    .blind-item { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px; }
+    .blind-lbl { display:flex; justify-content:space-between; font-size:12px; margin-bottom:7px; }
+    .blind-pct { font-family:'Space Mono',monospace; font-size:10px; color:var(--accent); }
+    .prog-bar { height:5px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:8px; }
+    .prog-fill { height:100%; background:var(--accent); border-radius:3px; transition:width .4s; }
+    .blind-btns { display:flex; gap:6px; }
+    .blind-btn { flex:1; padding:5px; font-size:9px; font-family:'Space Mono',monospace; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--muted); cursor:pointer; transition:all .2s; letter-spacing:1px; }
+    .blind-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .climate-wrap { display:flex; align-items:center; gap:20px; }
+    .temp-circle { width:90px; height:90px; border-radius:50%; border:2px solid var(--accent); box-shadow:0 0 20px rgba(79,255,176,.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .temp-val { font-family:'Space Mono',monospace; font-size:24px; font-weight:700; color:var(--accent); }
+    .temp-btns { display:flex; gap:7px; margin-bottom:10px; }
+    .temp-btn { width:30px; height:30px; border-radius:7px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:15px; cursor:pointer; transition:all .2s; }
+    .temp-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .mode-row { display:flex; gap:5px; }
+    .mode-btn { flex:1; padding:5px; font-size:9px; font-family:'Space Mono',monospace; border:1px solid var(--border); border-radius:6px; background:var(--surface2); color:var(--muted); cursor:pointer; transition:all .2s; letter-spacing:1px; }
+    .mode-btn:hover { border-color:var(--accent2); color:var(--accent2); }
+    .mode-btn.active { background:rgba(0,191,255,.1); border-color:var(--accent2); color:var(--accent2); }
+
+    /* ---- PAGE WEATHER ---- */
+    #page-weather { display:none; flex-direction:column; gap:16px; }
+    #page-weather.active { display:flex; }
+    .weather-hero { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .weather-current { background:linear-gradient(135deg,#0d1117,#111827); border:1px solid var(--border); border-radius:var(--radius); padding:24px; text-align:center; }
+    .w-icon { font-size:56px; margin-bottom:8px; }
+    .w-temp { font-family:'Space Mono',monospace; font-size:48px; font-weight:700; }
+    .w-desc { font-size:13px; color:var(--muted); margin-top:4px; letter-spacing:1px; }
+    .w-city { font-size:10px; color:var(--accent); letter-spacing:3px; margin-bottom:14px; }
+    .w-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px; text-align:left; }
+    .w-stat { background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:9px 12px; }
+    .w-stat-lbl { font-size:9px; color:var(--muted); margin-bottom:3px; letter-spacing:1px; }
+    .w-stat-val { font-family:'Space Mono',monospace; font-size:14px; }
+    .forecast-list { display:flex; flex-direction:column; gap:8px; }
+    .fc-row { background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:9px 14px; display:flex; align-items:center; justify-content:space-between; }
+    .fc-day { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); width:36px; }
+    .fc-icon { font-size:20px; }
+    .fc-desc { font-size:11px; color:var(--muted); flex:1; text-align:center; }
+    .fc-temps { font-family:'Space Mono',monospace; font-size:11px; }
+    .fc-max { color:var(--text); }
+    .fc-min { color:var(--muted); }
+
+    /* ---- PAGE ENERGY ---- */
+    #page-energy { display:none; flex-direction:column; gap:16px; }
+    #page-energy.active { display:flex; }
+    .energy-top { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    .energy-stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+    .es-icon { font-size:22px; margin-bottom:6px; }
+    .es-val { font-family:'Space Mono',monospace; font-size:26px; font-weight:700; }
+    .es-lbl { font-size:10px; color:var(--muted); margin-top:3px; }
+    .es-change { font-size:10px; margin-top:5px; }
+    .es-change.down { color:var(--accent); }
+    .graph-wrap { display:flex; gap:10px; height:160px; }
+    .y-axis { display:flex; flex-direction:column-reverse; justify-content:space-between; font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); padding-right:6px; }
+    .graph-inner { flex:1; display:flex; flex-direction:column; }
+    .bars-row { flex:1; display:flex; align-items:flex-end; gap:5px; padding-bottom:4px; }
+    .bar { flex:1; border-radius:4px 4px 0 0; background:var(--accent); opacity:.7; min-height:3px; transition:opacity .2s; cursor:pointer; }
+    .bar:hover { opacity:1; }
+    .x-axis { display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); border-top:1px solid var(--border); padding-top:5px; }
+
+    /* ---- PAGE NEWS ---- */
+    #page-news { display:none; flex-direction:column; gap:16px; }
+    #page-news.active { display:flex; }
+    .news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+    .news-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; transition:border-color .2s; }
+    .news-card:hover { border-color:var(--accent2); }
+    .news-badge { display:inline-block; font-size:9px; letter-spacing:1px; text-transform:uppercase; padding:2px 8px; border-radius:4px; font-weight:700; margin-bottom:8px; }
+    .badge-tech { background:rgba(0,191,255,.1); color:var(--accent2); border:1px solid rgba(0,191,255,.2); }
+    .badge-life { background:rgba(79,255,176,.1); color:var(--accent); border:1px solid rgba(79,255,176,.2); }
+    .badge-security { background:rgba(255,107,53,.1); color:var(--warn); border:1px solid rgba(255,107,53,.2); }
+    .news-title { font-size:13px; font-weight:600; line-height:1.5; margin-bottom:6px; }
+    .news-meta { font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; }
+
+    /* ---- PAGE CALENDAR ---- */
+    #page-calendar { display:none; flex-direction:column; gap:14px; }
+    #page-calendar.active { display:flex; }
+    .cal-layout { display:grid; grid-template-columns:1fr 320px; gap:14px; flex:1; min-height:0; }
+    .cal-main { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; }
+    .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .cal-nav-btn { width:30px; height:30px; border-radius:7px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:14px; cursor:pointer; transition:all .2s; }
+    .cal-nav-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .cal-month-lbl { font-family:'Space Mono',monospace; font-size:13px; font-weight:700; letter-spacing:2px; }
+    .cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:5px; }
+    .cal-wd { text-align:center; font-size:9px; letter-spacing:2px; color:var(--muted); padding:3px 0; font-family:'Space Mono',monospace; }
+    .cal-days { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; flex:1; }
+    .cal-day { border-radius:7px; padding:5px 3px; cursor:pointer; transition:all .15s; min-height:52px; border:1px solid transparent; position:relative; }
+    .cal-day:hover { background:var(--surface2); border-color:var(--border); }
+    .cal-day.other-month .cal-day-num { opacity:.3; }
+    .cal-day.today { border-color:var(--accent) !important; background:rgba(79,255,176,.04); }
+    .cal-day.selected { background:rgba(0,191,255,.07); border-color:var(--accent2) !important; }
+    .cal-day-num { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); display:block; margin-bottom:3px; }
+    .cal-day.today .cal-day-num { color:var(--accent); font-weight:700; }
+    .cal-day-events { display:flex; flex-direction:column; gap:2px; }
+    .cal-ev-dot { font-size:8px; border-radius:3px; padding:1px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ev-c0 { background:rgba(79,255,176,.15); color:var(--accent); }
+    .ev-c1 { background:rgba(0,191,255,.15); color:var(--accent2); }
+    .ev-c2 { background:rgba(167,139,250,.15); color:var(--purple); }
+    .ev-c3 { background:rgba(255,107,53,.15); color:var(--warn); }
+    .cal-side { display:flex; flex-direction:column; gap:12px; }
+    .cal-events-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; flex:1; overflow-y:auto; }
+    .cal-sel-title { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); margin-bottom:12px; letter-spacing:2px; }
+    .ev-item { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:9px 10px; margin-bottom:7px; }
+    .ev-bar { width:3px; height:28px; border-radius:2px; flex-shrink:0; }
+    .ev-info { flex:1; min-width:0; }
+    .ev-name { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ev-time { font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; margin-top:2px; }
+    .ev-del { width:22px; height:22px; border-radius:5px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:11px; cursor:pointer; transition:all .15s; flex-shrink:0; }
+    .ev-del:hover { border-color:var(--warn); color:var(--warn); background:rgba(255,107,53,.1); }
+    .no-events { font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; text-align:center; padding:16px 0; }
+    .add-ev-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+    .form-col { display:flex; flex-direction:column; gap:7px; }
+    .form-row2 { display:flex; gap:7px; }
+    .fi { width:100%; padding:7px 10px; border-radius:7px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-family:'Syne',sans-serif; font-size:12px; outline:none; transition:border-color .2s; }
+    .fi:focus { border-color:var(--accent2); }
+    .fi::placeholder { color:var(--muted); }
+    .color-row { display:flex; gap:6px; }
+    .cp { width:20px; height:20px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:all .15s; }
+    .cp.sel { border-color:var(--text); transform:scale(1.25); }
+    .add-btn-full { width:100%; padding:8px; border-radius:8px; border:1px solid var(--accent); background:rgba(79,255,176,.08); color:var(--accent); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; cursor:pointer; transition:all .2s; }
+    .add-btn-full:hover { background:rgba(79,255,176,.18); }
+
+    @media(max-width:860px){
+      .cal-layout,.weather-hero,.devices-section-grid{grid-template-columns:1fr}
+      .home-bottom-grid,.energy-top{grid-template-columns:repeat(2,1fr)}
+      .home-top{grid-template-columns:1fr}
+    }
+  </style>
 </head>
-
 <body>
- 
-  <!-- <header class="topbar">
-    <div class="logo">SmartHome</div>
- 
-    <div class="datetime">
-      <div id="date"></div>
-      <div id="time"></div>
-    </div>
- 
-    <div class="search">
-      <input type="text" placeholder="Search devices..." />
-    </div>
- 
-    <div class="user">
-      <div class="avatar">JD</div>
-      <div>
-        <div class="name">John Doe</div>
-        <div class="role">Admin</div>
-      </div>
-    </div>
-  </header> -->
-  
-  <!-- SCREENSAVER CLOCK -->
-  <section class="dashboard-clock">
-    <div class="clock-wrapper">
-      <div class="clock-date" id="clock-date">MERCREDI 18 FÉVRIER 2026</div>
-      <div class="ampm" id="ampm">PM</div>
-      <div class="flip-clock">
-        <div class="time-box" id="hours"><span class="d1">0</span><span class="d2">9</span></div>
-        <div class="time-sep"></div>
-        <div class="time-box" id="minutes"><span class="d1">3</span><span class="d2">9</span></div>
-      </div>
-      <div class="clock-stats">
-        <div class="clock-stat">
-          <div class="val">24</div>
-          <div class="lbl">APPAREILS ACTIFS</div>
-        </div>
-        <div class="clock-stat">
-          <div class="val">22°C</div>
-          <div class="lbl">TEMPÉRATURE</div>
-        </div>
-        <div class="clock-stat">
-          <div class="val">2</div>
-          <div class="lbl">ALERTES</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <main class="dashboard">
- 
-    <!-- LIGHTS -->
-    <section class="card lights-card">
-      <div class="card-header">
-        <h2>Lights</h2>
-        <span class="add-btn">+</span>
-      </div>
-
-      <div class="device-grid">
-
-        <div class="light-card active">
-          <div class="light-top">
-            <div class="light-icon">💡</div>
-            <div class="status-dot on"></div>
-          </div>
-          <div class="light-name">Living<br>Room</div>
-          <div class="light-value">75%</div>
-        </div>
-
-        <div class="light-card">
-          <div class="light-top">
-            <div class="light-icon">💡</div>
-            <div class="status-dot"></div>
-          </div>
-          <div class="light-name">Bedroom</div>
-        </div>
-
-        <div class="light-card active">
-          <div class="light-top">
-            <div class="light-icon">💡</div>
-            <div class="status-dot on"></div>
-          </div>
-          <div class="light-name">Kitchen</div>
-          <div class="light-value">100%</div>
-        </div>
-
-        <div class="light-card">
-          <div class="light-top">
-            <div class="light-icon">💡</div>
-            <div class="status-dot"></div>
-          </div>
-          <div class="light-name">Bathroom</div>
-        </div>
-
-      </div>
-    </section>
-
- 
-    <!-- BLINDS -->
-    <section class="card blinds-card">
-      <h2>Blinds</h2>
-
-      <div class="blind-card">
-        <div class="blind-header">
-          <span>Living Room</span>
-          <span class="percent">100%</span>
-        </div>
-
-        <div class="progress">
-          <div style="width:100%"></div>
-        </div>
-
-        <div class="blind-actions">
-          <button class="blind-btn">⬆ Open</button>
-          <button class="blind-btn">⬇ Close</button>
-        </div>
-      </div>
-
-      <div class="blind-card">
-        <div class="blind-header">
-          <span>Bedroom</span>
-          <span class="percent">50%</span>
-        </div>
-
-        <div class="progress">
-          <div style="width:50%"></div>
-        </div>
-
-        <div class="blind-actions">
-          <button class="blind-btn">⬆ Open</button>
-          <button class="blind-btn">⬇ Close</button>
-        </div>
-      </div>
-
-      <div class="blind-card">
-        <div class="blind-header">
-          <span>Kitchen</span>
-          <span class="percent">0%</span>
-        </div>
-
-        <div class="progress">
-          <div style="width:0%"></div>
-        </div>
-
-        <div class="blind-actions">
-          <button class="blind-btn">⬆ Open</button>
-          <button class="blind-btn">⬇ Close</button>
-        </div>
-      </div>
-
-    </section>
-
- 
-    <!-- CLIMATE -->
-    <section class="card climate">
-      <h2>Climate</h2>
- 
-      <div class="circle">
-        <div class="temperature">22°</div>
-      </div>
- 
-      <div class="climate-buttons">
-        <button>-</button>
-        <button>+</button>
-      </div>
- 
-      <div class="mode-buttons">
-        <button>HEAT</button>
-        <button>COOL</button>
-        <button class="active">AUTO</button>
-      </div>
-    </section>
- 
-    <section class="card weather-card">
-      <h2>Weather</h2>
-
-      <!-- Weather Main Info -->
-      <div class="weather-main">
-        <div class="weather-icon">
-          <span>☁</span>
-        </div>
-
-        <div class="weather-temp">23°C</div>
-        <div class="weather-desc">Partly Cloudy</div>
-      </div>
-
-      <!-- Stats -->
-      <div class="weather-stats">
-        <div class="stat">
-          <span>💧 Humidity</span>
-          <span>65%</span>
-        </div>
-
-        <div class="stat">
-          <span>🌬 Wind Speed</span>
-          <span>12 km/h</span>
-        </div>
-      </div>
-
-      <hr class="weather-divider" />
-
-      <!-- Forecast -->
-      <div class="forecast">
-        <h3>5-DAY FORECAST</h3>
-
-        <div class="forecast-days">
-          <div class="forecast-day">
-            <span>Mon</span>
-            <div>☁</div>
-            <span>24°</span>
-          </div>
-          <div class="forecast-day">
-            <span>Tue</span>
-            <div>☁</div>
-            <span>23°</span>
-          </div>
-          <div class="forecast-day">
-            <span>Wed</span>
-            <div>☁</div>
-            <span>22°</span>
-          </div>
-          <div class="forecast-day">
-            <span>Thu</span>
-            <div>☁</div>
-            <span>21°</span>
-          </div>
-          <div class="forecast-day">
-            <span>Fri</span>
-            <div>☁</div>
-            <span>20°</span>
-          </div>
-        </div>
-      </div>
-    </section>
 
 
- 
-  </main>
- 
-    <!-- ===== BOTTOM DARK SECTION ===== -->
-<section class="bottom-dark">
- 
-  <!-- LEFT : DAILY NEWS -->
-  <div class="daily-news">
-    <div class="news-header">
-      <div class="news-icon">📰</div>
-      <h2>Daily News</h2>
-    </div>
- 
-    <div class="news-item">
-      <h3>Smart Home Market Expected to Grow 25% This Year</h3>
-      <div class="news-info">
-        <span>Tech News</span>
-        <span>2 hours ago</span>
-      </div>
-      <span class="badge tech">Technology</span>
-    </div>
- 
-    <div class="news-item">
-      <h3>New Energy Saving Tips: Reduce Bills by 30%</h3>
-      <div class="news-info">
-        <span>Green Living</span>
-        <span>5 hours ago</span>
-      </div>
-      <span class="badge life">Lifestyle</span>
-    </div>
- 
-    <div class="news-item">
-      <h3>IoT Security: Best Practices for Smart Homes</h3>
-      <div class="news-info">
-        <span>Security Today</span>
-        <span>8 hours ago</span>
-      </div>
-      <span class="badge security">Security</span>
-    </div>
+
+<div class="topbar">
+  <div class="logo">SmartHome</div>
+  <div class="topbar-right">
+    <div class="topbar-clock" id="topbar-clock">--:--</div>
+    <div class="online-badge"><div class="dot-pulse"></div><span>En ligne</span></div>
   </div>
- 
-  <!-- RIGHT : SYSTEM OVERVIEW -->
-  <div class="system-box">
-    <h2>System Overview</h2>
- 
-    <div class="overview-grid">
- 
-      <div class="overview-card">
-        <div class="icon green">📈</div>
-        <div>
-          <h3>24</h3>
-          <p>Active Devices</p>
-        </div>
-      </div>
- 
-      <div class="overview-card">
-        <div class="icon blue">📶</div>
-        <div>
-          <h3>Stable</h3>
-          <p>Network Status</p>
-        </div>
-      </div>
- 
-      <div class="overview-card">
-        <div class="icon orange">⚠</div>
-        <div>
-          <h3>2</h3>
-          <p>Alerts</p>
-        </div>
-      </div>
- 
-    </div>
-  </div>
- 
-</section>
- 
-<!-- ===== ENERGY USAGE SECTION ===== -->
-<section class="energy-usage">
-  <h2>Energy Usage</h2>
-  <p class="subtitle">Today's consumption</p>
- 
-  <!-- Graph area with labels -->
-  <div class="graph-container">
-    <!-- Y-axis labels -->
-    <div class="y-axis">
-      <span>0 kWh</span>
-      <span>2 kWh</span>
-      <span>4 kWh</span>
-      <span>6 kWh</span>
-      <span>8 kWh</span>
-    </div>
- 
-    <!-- Graph bars and X-axis -->
-    <div class="graph-content">
-      <div class="bars">
-        <div class="bar" style="height: 20%;"></div>
-        <div class="bar" style="height: 45%;"></div>
-        <div class="bar" style="height: 70%;"></div>
-        <div class="bar" style="height: 90%;"></div>
-        <div class="bar" style="height: 60%;"></div>
-        <div class="bar" style="height: 40%;"></div>
-        <div class="bar" style="height: 25%;"></div>
-      </div>
- 
-      <div class="x-axis">
-        <span>00:00</span>
-        <span>04:00</span>
-        <span>08:00</span>
-        <span>12:00</span>
-        <span>16:00</span>
-        <span>20:00</span>
-        <span>24:00</span>
-      </div>
-    </div>
-  </div>
- 
-  <!-- Stats footer -->
-  <div class="energy-stats">
-    <div class="total">45.8 kWh</div>
-    <div class="comparison">↓ 12% vs yesterday</div>
-  </div>
-</section>
- 
-<script type="module" src="../renderer.js"></script>
+</div>
 
+<div class="app-body">
+  <nav class="sidebar">
+    <button class="nav-btn active" onclick="showPage('home',this)">🏠<span class="tooltip">Accueil</span></button>
+    <button class="nav-btn" onclick="showPage('devices',this)">💡<span class="tooltip">Appareils</span></button>
+    <button class="nav-btn" onclick="showPage('weather',this)">🌤<span class="tooltip">Météo</span></button>
+    <button class="nav-btn" onclick="showPage('energy',this)">⚡<span class="tooltip">Énergie</span></button>
+    <button class="nav-btn" onclick="showPage('news',this)">📰<span class="tooltip">Actualités</span></button>
+    <button class="nav-btn" onclick="showPage('calendar',this)">📅<span class="tooltip">Calendrier</span></button>
+  </nav>
+
+  <div class="pages">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="dash-greeting" id="dash-greeting">Bonjour, <span>Smart Home</span> 🏠</div>
+      <div class="dash-grid">
+
+        <!-- CLOCK -->
+        <div class="dc dc-clock">
+          <div>
+            <div class="dc-clock-greeting" id="dash-ampm-greet">BONSOIR</div>
+            <div class="dc-clock-time"><span id="h-hours">00</span><span class="dc-clock-sep" id="h-sep">:</span><span id="h-minutes">00</span></div>
+            <div class="dc-clock-date" id="h-date">---</div>
+          </div>
+          <div class="dc-clock-stats">
+            <div class="dc-stat-row"><span class="dc-stat-lbl">🌡 Température ext.</span><span class="dc-stat-val" id="h-temp">--°C</span></div>
+            <div class="dc-stat-row"><span class="dc-stat-lbl">💡 Appareils actifs</span><span class="dc-stat-val" id="h-devices">0</span></div>
+            <div class="dc-stat-row"><span class="dc-stat-lbl">⚡ Énergie aujourd'hui</span><span class="dc-stat-val" id="h-energy">-- kWh</span></div>
+            <div class="dc-stat-row"><span class="dc-stat-lbl">📶 Réseau</span><span class="dc-stat-val" style="color:var(--accent)">Stable</span></div>
+          </div>
+        </div>
+
+        <!-- WEATHER -->
+        <div class="dc dc-weather">
+          <div class="dc-section-title">Météo — Lyon</div>
+          <div class="dc-weather-top">
+            <div class="dc-w-icon" id="h-w-icon">⏳</div>
+            <div class="dc-w-main">
+              <div class="dc-w-temp" id="h-w-temp">--°C</div>
+              <div class="dc-w-desc" id="h-w-desc">Chargement...</div>
+              <div class="dc-w-loc">Lyon, France</div>
+            </div>
+          </div>
+          <div class="dc-weather-stats">
+            <div class="dc-ws"><div class="dc-ws-lbl">💧 HUMIDITÉ</div><div class="dc-ws-val" id="h-w-hum">--%</div></div>
+            <div class="dc-ws"><div class="dc-ws-lbl">🌬 VENT</div><div class="dc-ws-val" id="h-w-wind">-- km/h</div></div>
+            <div class="dc-ws"><div class="dc-ws-lbl">🌡 RESSENTI</div><div class="dc-ws-val" id="h-w-feels">--°C</div></div>
+          </div>
+          <div class="dc-forecast" id="h-forecast"></div>
+        </div>
+
+        <!-- LIGHTS -->
+        <div class="dc dc-lights">
+          <div class="dc-section-title">Éclairage</div>
+          <div class="dc-lights-grid" id="h-lights"></div>
+        </div>
+
+        <!-- ENERGY -->
+        <div class="dc dc-energy">
+          <div class="dc-section-title">Énergie</div>
+          <div style="display:flex;align-items:flex-end;gap:12px">
+            <div>
+              <div class="dc-energy-big" id="h-e-total">-- kWh</div>
+              <div class="dc-energy-sub">consommation aujourd'hui</div>
+              <div class="dc-energy-badge" id="h-e-diff">---</div>
+            </div>
+          </div>
+          <div class="dc-mini-graph" id="h-e-bars"></div>
+          <div class="dc-energy-row">
+            <div class="dc-estat"><div class="dc-estat-lbl">Ce mois</div><div class="dc-estat-val">187 kWh</div></div>
+            <div class="dc-estat"><div class="dc-estat-lbl">Coût estimé</div><div class="dc-estat-val">€ 42</div></div>
+            <div class="dc-estat"><div class="dc-estat-lbl">Économies</div><div class="dc-estat-val" style="color:var(--accent)">↓ 8%</div></div>
+          </div>
+        </div>
+
+        <!-- SUMMARY: Climate + Blinds + News -->
+        <div class="dc dc-summary">
+          <div class="dc-section-title">Climatisation</div>
+          <div class="dc-clim-row">
+            <div class="dc-clim-circle"><div class="dc-clim-temp" id="h-clim">22°</div></div>
+            <div class="dc-clim-info">
+              <div class="dc-clim-lbl">Température consigne</div>
+              <div class="dc-clim-mode">MODE AUTO</div>
+              <div style="display:flex;gap:5px;margin-top:8px">
+                <button onclick="changeTemp(-1);document.getElementById('h-clim').textContent=climTemp+'°'" style="flex:1;padding:4px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:13px">−</button>
+                <button onclick="changeTemp(1);document.getElementById('h-clim').textContent=climTemp+'°'" style="flex:1;padding:4px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:13px">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="dc-section-title">Volets</div>
+          <div class="dc-blinds-row" id="h-blinds"></div>
+          <div class="dc-section-title">Dernière actualité</div>
+          <div class="dc-news-latest" id="h-news-latest">
+            <div class="dc-news-tag">MONDE</div>
+            <div class="dc-news-title">Chargement des actualités...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DEVICES -->
+    <div class="page" id="page-devices">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">Éclairage</div>
+        <div class="devices-grid" id="lights-grid"></div>
+      </div>
+      <div class="devices-section-grid">
+        <div class="card">
+          <div class="card-title">Volets</div>
+          <div class="blinds-list" id="blinds-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Climatisation</div>
+          <div class="climate-wrap">
+            <div class="temp-circle"><div class="temp-val" id="clim-temp">22°</div></div>
+            <div style="flex:1">
+              <div class="temp-btns">
+                <button class="temp-btn" onclick="changeTemp(-1)">−</button>
+                <button class="temp-btn" onclick="changeTemp(1)">+</button>
+              </div>
+              <div class="mode-row">
+                <button class="mode-btn" onclick="setMode(this)">CHALEUR</button>
+                <button class="mode-btn" onclick="setMode(this)">FROID</button>
+                <button class="mode-btn active" onclick="setMode(this)">AUTO</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEATHER -->
+    <div class="page" id="page-weather">
+      <div class="weather-hero">
+        <div class="weather-current">
+          <div class="w-city">LYON, FRANCE</div>
+          <div class="w-icon" id="w-icon">⏳</div>
+          <div class="w-temp" id="w-temp">--°C</div>
+          <div class="w-desc" id="w-desc">Chargement...</div>
+          <div class="w-stats">
+            <div class="w-stat"><div class="w-stat-lbl">💧 HUMIDITÉ</div><div class="w-stat-val" id="w-hum">--%</div></div>
+            <div class="w-stat"><div class="w-stat-lbl">🌬 VENT</div><div class="w-stat-val" id="w-wind">-- km/h</div></div>
+            <div class="w-stat"><div class="w-stat-lbl">🌡 RESSENTI</div><div class="w-stat-val" id="w-feels">--°C</div></div>
+            <div class="w-stat"><div class="w-stat-lbl">🌅 LEVER</div><div class="w-stat-val">06:52</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Prévisions 5 jours</div>
+          <div class="forecast-list" id="forecast-list">
+            <div class="fc-row"><div class="fc-day">---</div><div class="fc-icon">⏳</div><div class="fc-desc">Chargement...</div><div class="fc-temps">--° / --°</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENERGY -->
+    <div class="page" id="page-energy">
+      <div class="energy-top">
+        <div class="energy-stat-card"><div class="es-icon">⚡</div><div class="es-val" id="es-today">-- kWh</div><div class="es-lbl">Aujourd'hui</div><div class="es-change down" id="es-diff">---</div></div>
+        <div class="energy-stat-card"><div class="es-icon">📅</div><div class="es-val">187 kWh</div><div class="es-lbl">Ce mois</div><div class="es-change down">↓ 8% vs mois dernier</div></div>
+        <div class="energy-stat-card"><div class="es-icon">🌿</div><div class="es-val">€ 42</div><div class="es-lbl">Coût estimé</div><div class="es-change down">↓ économies ce mois</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Consommation horaire (simulée)</div>
+        <div class="graph-wrap">
+          <div class="y-axis"><span>8kWh</span><span>6kWh</span><span>4kWh</span><span>2kWh</span><span>0</span></div>
+          <div class="graph-inner">
+            <div class="bars-row" id="energy-bars"></div>
+            <div class="x-axis"><span>00:00</span><span>04:00</span><span>08:00</span><span>12:00</span><span>16:00</span><span>20:00</span><span>24:00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEWS -->
+    <div class="page" id="page-news">
+      <div class="card-title">Actualités Mondiales</div>
+      <div class="news-grid" id="news-grid"></div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="page" id="page-calendar">
+      <div class="cal-layout">
+        <div class="cal-main">
+          <div class="cal-header">
+            <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+            <div class="cal-month-lbl" id="cal-month-lbl">---</div>
+            <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+          </div>
+          <div class="cal-weekdays">
+            <div class="cal-wd">LUN</div><div class="cal-wd">MAR</div><div class="cal-wd">MER</div>
+            <div class="cal-wd">JEU</div><div class="cal-wd">VEN</div>
+            <div class="cal-wd" style="color:var(--warn)">SAM</div>
+            <div class="cal-wd" style="color:var(--warn)">DIM</div>
+          </div>
+          <div class="cal-days" id="cal-days"></div>
+        </div>
+        <div class="cal-side">
+          <div class="cal-events-panel">
+            <div class="cal-sel-title" id="cal-sel-title">SÉLECTIONNEZ UN JOUR</div>
+            <div id="cal-ev-list"><div class="no-events">Aucun événement</div></div>
+          </div>
+          <div class="add-ev-card">
+            <div class="card-title">+ Nouvel événement</div>
+            <div class="form-col">
+              <input class="fi" id="ev-name" placeholder="Nom de l'événement"/>
+              <div class="form-row2">
+                <input class="fi" id="ev-date" type="date" style="flex:1"/>
+                <input class="fi" id="ev-time" type="time" style="flex:1;width:auto"/>
+              </div>
+              <div class="color-row" id="color-picker">
+                <button class="cp sel" data-c="0" style="background:var(--accent)" onclick="selColor(this)"></button>
+                <button class="cp" data-c="1" style="background:var(--accent2)" onclick="selColor(this)"></button>
+                <button class="cp" data-c="2" style="background:var(--purple)" onclick="selColor(this)"></button>
+                <button class="cp" data-c="3" style="background:var(--warn)" onclick="selColor(this)"></button>
+              </div>
+              <button class="add-btn-full" onclick="addEvent()">AJOUTER L'ÉVÉNEMENT</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const pad = n => String(n).padStart(2,'0');
+const DAYS_FR = ['DIMANCHE','LUNDI','MARDI','MERCREDI','JEUDI','VENDREDI','SAMEDI'];
+const MONTHS_FR = ['JANVIER','FÉVRIER','MARS','AVRIL','MAI','JUIN','JUILLET','AOÛT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DÉCEMBRE'];
+const MONTHS_SHORT = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const DAYS_SHORT = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+
+/* NAV */
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* CLOCK */
+function updateClock() {
+  const n = new Date(), h = n.getHours(), m = n.getMinutes(), h12 = h%12||12;
+  const timeStr = `${pad(h)}:${pad(m)}`;
+  document.getElementById('topbar-clock').textContent = timeStr;
+  document.getElementById('clock-date') && (document.getElementById('clock-date').textContent =
+    `${DAYS_FR[n.getDay()]} ${n.getDate()} ${MONTHS_FR[n.getMonth()]} ${n.getFullYear()}`);
+
+  // Home dashboard clock
+  document.getElementById('h-hours').textContent = pad(h);
+  document.getElementById('h-minutes').textContent = pad(m);
+  document.getElementById('h-date').textContent =
+    `${DAYS_FR[n.getDay()]} ${n.getDate()} ${MONTHS_FR[n.getMonth()]} ${n.getFullYear()}`;
+
+  // Greeting
+  const greet = h < 12 ? 'BONJOUR' : h < 18 ? 'BON APRÈS-MIDI' : 'BONSOIR';
+  const greetEmoji = h < 12 ? '☀️' : h < 18 ? '🌤' : '🌙';
+  document.getElementById('dash-ampm-greet').textContent = greet;
+  document.getElementById('dash-greeting').innerHTML = `${greet.charAt(0)+greet.slice(1).toLowerCase()}, <span>Smart Home</span> ${greetEmoji}`;
+}
+updateClock(); setInterval(updateClock,1000);
+
+/* DEVICES */
+const lights = [
+  {name:'Salon',on:true,val:'75%'},{name:'Chambre',on:false,val:''},
+  {name:'Cuisine',on:true,val:'100%'},{name:'Salle de bain',on:false,val:''},
+  {name:'Bureau',on:true,val:'50%'},{name:'Couloir',on:false,val:''},
+];
+const blinds = [{name:'Salon',pct:100},{name:'Chambre',pct:50},{name:'Cuisine',pct:0}];
+
+function buildDevices() {
+  // Devices page lights
+  document.getElementById('lights-grid').innerHTML = lights.map((l,i)=>`
+    <div class="big-device-card ${l.on?'on':''}" onclick="toggleLight(${i})">
+      <div class="bd-top"><div class="bd-icon">💡</div><button class="bd-toggle"></button></div>
+      <div class="bd-name">${l.name}</div>
+      ${l.on?`<div class="bd-val">${l.val}</div>`:''}
+    </div>`).join('');
+
+  // Devices page blinds
+  document.getElementById('blinds-list').innerHTML = blinds.map((b,i)=>`
+    <div class="blind-item">
+      <div class="blind-lbl"><span>${b.name}</span><span class="blind-pct">${b.pct}%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${b.pct}%"></div></div>
+      <div class="blind-btns">
+        <button class="blind-btn" onclick="adjBlind(${i},1)">⬆ Ouvrir</button>
+        <button class="blind-btn" onclick="adjBlind(${i},-1)">⬇ Fermer</button>
+      </div>
+    </div>`).join('');
+
+  // Home dashboard lights
+  const hl = document.getElementById('h-lights');
+  if (hl) hl.innerHTML = lights.map((l,i)=>`
+    <div class="dc-light ${l.on?'on':''}" onclick="toggleLight(${i})">
+      <div class="dc-light-ico">${l.on?'💡':'🔦'}</div>
+      <div class="dc-light-name">${l.name}</div>
+      ${l.on?`<div class="dc-light-val">${l.val}</div>`:`<div class="dc-light-off">Éteint</div>`}
+    </div>`).join('');
+
+  // Home dashboard blinds
+  const hb = document.getElementById('h-blinds');
+  if (hb) hb.innerHTML = blinds.map(b=>`
+    <div class="dc-blind-mini">
+      <span class="dc-blind-name">${b.name}</span>
+      <div class="dc-blind-bar"><div class="dc-blind-fill" style="width:${b.pct}%"></div></div>
+      <span class="dc-blind-pct">${b.pct}%</span>
+    </div>`).join('');
+
+  // Active count
+  const count = lights.filter(l=>l.on).length;
+  document.getElementById('h-devices') && (document.getElementById('h-devices').textContent = count);
+  document.getElementById('stat-devices') && (document.getElementById('stat-devices').textContent = count);
+}
+function toggleLight(i){ lights[i].on=!lights[i].on; buildDevices(); }
+function adjBlind(i,d){ blinds[i].pct=Math.min(100,Math.max(0,blinds[i].pct+d*25)); buildDevices(); }
+
+let climTemp=22;
+function changeTemp(d){ climTemp=Math.min(30,Math.max(15,climTemp+d)); document.getElementById('clim-temp').textContent=climTemp+'°'; }
+function setMode(btn){ btn.closest('.mode-row').querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+
+/* ENERGY */
+function buildEnergy(){
+  const profile=[0.5,0.4,0.3,0.3,0.4,0.8,2.1,3.5,4.2,3.8,3.5,3.8,4.0,3.6,3.2,3.5,4.8,6.2,7.1,6.8,5.5,4.2,3.0,1.8];
+  const h=new Date().getHours(); let total=0;
+  const bars=document.getElementById('energy-bars');
+  const hbars=document.getElementById('h-e-bars');
+  if(bars) bars.innerHTML='';
+  if(hbars) hbars.innerHTML='';
+  for(let i=0;i<7;i++){
+    const hi=Math.min(Math.floor(i*24/7),h); const kwh=profile[hi]||.3; total+=kwh;
+    if(bars){const b=document.createElement('div');b.className='bar';b.style.height=Math.min(100,(kwh/8)*100)+'%';b.title=kwh.toFixed(1)+' kWh';bars.appendChild(b);}
+    if(hbars){const b=document.createElement('div');b.className='dc-bar';b.style.height=Math.min(100,(kwh/8)*100)+'%';b.title=kwh.toFixed(1)+' kWh';hbars.appendChild(b);}
+  }
+  const diff=Math.abs(((total-total*1.12)/(total*1.12)*100)).toFixed(1);
+  const diffTxt=`↓ ${diff}% vs hier`;
+  document.getElementById('es-today') && (document.getElementById('es-today').textContent=total.toFixed(1)+' kWh');
+  document.getElementById('es-diff') && (document.getElementById('es-diff').textContent=diffTxt);
+  document.getElementById('qs-energy') && (document.getElementById('qs-energy').textContent=total.toFixed(1)+' kWh');
+  document.getElementById('h-e-total') && (document.getElementById('h-e-total').textContent=total.toFixed(1)+' kWh');
+  document.getElementById('h-e-diff') && (document.getElementById('h-e-diff').textContent=diffTxt);
+  document.getElementById('h-energy') && (document.getElementById('h-energy').textContent=total.toFixed(1)+' kWh');
+}
+
+/* WEATHER */
+const WMO={0:['Ciel dégagé','☀'],1:['Princ. dégagé','🌤'],2:['Part. nuageux','⛅'],3:['Nuageux','☁'],
+  45:['Brouillard','🌫'],48:['Brouillard givrant','🌫'],51:['Bruine légère','🌦'],53:['Bruine','🌦'],55:['Bruine dense','🌧'],
+  61:['Pluie légère','🌧'],63:['Pluie','🌧'],65:['Pluie forte','🌧'],71:['Neige légère','🌨'],73:['Neige','🌨'],75:['Neige forte','❄'],
+  80:['Averses légères','🌦'],81:['Averses','🌦'],82:['Averses fortes','⛈'],95:['Orage','⛈'],96:['Orage + grêle','⛈'],99:['Orage fort','⛈']};
+async function fetchWeather(){
+  try{
+    const d=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=45.7485&longitude=4.8467&current=temperature_2m,relativehumidity_2m,apparent_temperature,weathercode,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis&forecast_days=5`).then(r=>r.json());
+    const c=d.current,[desc,icon]=WMO[c.weathercode]||['Inconnu','❓'];
+    const tempRound = Math.round(c.temperature_2m);
+
+    // Weather page
+    document.getElementById('w-icon').textContent=icon;
+    document.getElementById('w-temp').textContent=tempRound+'°C';
+    document.getElementById('w-desc').textContent=desc;
+    document.getElementById('w-hum').textContent=c.relativehumidity_2m+'%';
+    document.getElementById('w-wind').textContent=Math.round(c.windspeed_10m)+' km/h';
+    document.getElementById('w-feels').textContent=Math.round(c.apparent_temperature)+'°C';
+    document.getElementById('forecast-list').innerHTML=d.daily.time.map((t,i)=>{
+      const date=new Date(t+'T12:00:00'),[,fi]=WMO[d.daily.weathercode[i]]||['','❓'];
+      return`<div class="fc-row"><div class="fc-day">${DAYS_SHORT[date.getDay()]}</div><div class="fc-icon">${fi}</div><div class="fc-desc">${(WMO[d.daily.weathercode[i]]||[''])[0]}</div><div class="fc-temps"><span class="fc-max">${Math.round(d.daily.temperature_2m_max[i])}°</span> / <span class="fc-min">${Math.round(d.daily.temperature_2m_min[i])}°</span></div></div>`;
+    }).join('');
+
+    // Home dashboard weather
+    document.getElementById('h-w-icon').textContent=icon;
+    document.getElementById('h-w-temp').textContent=tempRound+'°C';
+    document.getElementById('h-w-desc').textContent=desc;
+    document.getElementById('h-w-hum').textContent=c.relativehumidity_2m+'%';
+    document.getElementById('h-w-wind').textContent=Math.round(c.windspeed_10m)+' km/h';
+    document.getElementById('h-w-feels').textContent=Math.round(c.apparent_temperature)+'°C';
+    document.getElementById('h-temp').textContent=tempRound+'°C';
+    document.getElementById('stat-temp') && (document.getElementById('stat-temp').textContent=tempRound+'°C');
+    document.getElementById('qs-temp') && (document.getElementById('qs-temp').textContent=tempRound+'°C');
+
+    // Home forecast strip
+    const hfc = document.getElementById('h-forecast');
+    if(hfc) hfc.innerHTML = d.daily.time.slice(0,5).map((t,i)=>{
+      const date=new Date(t+'T12:00:00'),[,fi]=WMO[d.daily.weathercode[i]]||['','❓'];
+      return`<div class="dc-fc"><div class="dc-fc-day">${DAYS_SHORT[date.getDay()]}</div><div class="dc-fc-ico">${fi}</div><div class="dc-fc-tmp">${Math.round(d.daily.temperature_2m_max[i])}°</div></div>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('w-icon').textContent='⚠';
+    document.getElementById('w-desc').textContent='Données indisponibles';
+    document.getElementById('h-w-icon').textContent='⚠';
+  }
+}
+
+/* NEWS — real RSS feeds via rss2json (no key, CORS-safe) */
+const RSS_FEEDS = [
+  { url:'https://feeds.bbci.co.uk/news/world/rss.xml',              src:'BBC News',      badge:'badge-tech',     lbl:'Monde'  },
+  { url:'https://rss.dw.com/rdf/rss-en-all',                        src:'Deutsche Welle',badge:'badge-life',     lbl:'DW'     },
+  { url:'https://feeds.bbci.co.uk/news/world/europe/rss.xml',       src:'BBC Europe',    badge:'badge-security', lbl:'Europe' },
+];
+
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 3600)  return `il y a ${Math.floor(diff/60)} min`;
+  if (diff < 86400) return `il y a ${Math.floor(diff/3600)} h`;
+  return `il y a ${Math.floor(diff/86400)} j`;
+}
+
+async function fetchFeed(feed) {
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`;
+  const res = await fetch(proxy);
+  const json = await res.json();
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(json.contents, 'text/xml');
+  const items = [...xml.querySelectorAll('item')].slice(0, 4);
+  return items.map(item => ({
+    title: item.querySelector('title')?.textContent || '',
+    link:  item.querySelector('link')?.textContent || '#',
+    date:  item.querySelector('pubDate')?.textContent || '',
+    src:   feed.src,
+    badge: feed.badge,
+    lbl:   feed.lbl,
+  }));
+}
+
+async function buildNews() {
+  const grid = document.getElementById('news-grid');
+  grid.innerHTML = '<div style="color:var(--muted);font-family:\'Space Mono\',monospace;font-size:11px;grid-column:1/-1;padding:20px 0">Chargement des actualités...</div>';
+  let articles = [];
+  const results = await Promise.allSettled(RSS_FEEDS.map(fetchFeed));
+  results.forEach(r => { if (r.status === 'fulfilled') articles.push(...r.value); });
+  articles = articles.filter(a => a.title).sort((a,b) => new Date(b.date) - new Date(a.date));
+  if (!articles.length) {
+    grid.innerHTML = '<div style="color:var(--warn);font-family:\'Space Mono\',monospace;font-size:11px;grid-column:1/-1">Impossible de charger les actualités.</div>';
+    return;
+  }
+  grid.innerHTML = articles.slice(0, 9).map(n => `
+    <a class="news-card" href="${n.link}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:block">
+      <span class="news-badge ${n.badge}">${n.lbl}</span>
+      <div class="news-title">${n.title}</div>
+      <div class="news-meta">${n.src} · ${timeAgo(n.date)}</div>
+    </a>`).join('');
+
+  // Home latest news
+  if(articles.length) {
+    const first = articles[0];
+    const hn = document.getElementById('h-news-latest');
+    if(hn) hn.innerHTML = `<div class="dc-news-tag">${first.lbl}</div><a href="${first.link}" target="_blank" rel="noopener" style="text-decoration:none"><div class="dc-news-title">${first.title}</div></a><div class="dc-news-src">${first.src} · ${timeAgo(first.date)}</div>`;
+  }
+}
+
+/* CALENDAR */
+let calY,calM,calSel,activeColor=0,events={};
+
+function calInit(){
+  const t=new Date(); calY=t.getFullYear(); calM=t.getMonth();
+  calSel=`${calY}-${pad(calM+1)}-${pad(t.getDate())}`;
+  document.getElementById('ev-date').value=calSel;
+  // Seed sample events
+  const tKey=calSel;
+  const tom=new Date(t); tom.setDate(t.getDate()+1);
+  const tomKey=`${tom.getFullYear()}-${pad(tom.getMonth()+1)}-${pad(tom.getDate())}`;
+  const nw=new Date(t); nw.setDate(t.getDate()+5);
+  const nwKey=`${nw.getFullYear()}-${pad(nw.getMonth()+1)}-${pad(nw.getDate())}`;
+  events[tKey]=[{name:'Révision chaudière',time:'10:00',c:0},{name:'Livraison colis',time:'14:30',c:1}];
+  events[tomKey]=[{name:'Réunion famille',time:'19:00',c:2}];
+  events[nwKey]=[{name:'Maintenance réseau',time:'09:00',c:3}];
+  renderCal(); renderEvents();
+}
+
+function calNav(d){ calM+=d; if(calM<0){calM=11;calY--;}if(calM>11){calM=0;calY++;} renderCal(); }
+
+function renderCal(){
+  document.getElementById('cal-month-lbl').textContent=`${MONTHS_SHORT[calM].toUpperCase()} ${calY}`;
+  const container=document.getElementById('cal-days'); container.innerHTML='';
+  const today=new Date();
+  const first=new Date(calY,calM,1);
+  let startDow=(first.getDay()+6)%7;
+  const dim=new Date(calY,calM+1,0).getDate();
+  const dimp=new Date(calY,calM,0).getDate();
+  const total=Math.ceil((startDow+dim)/7)*7;
+
+  for(let i=0;i<total;i++){
+    const cell=document.createElement('div'); cell.className='cal-day';
+    let day,month,year,other=false;
+    if(i<startDow){day=dimp-startDow+i+1;month=calM===0?11:calM-1;year=calM===0?calY-1:calY;other=true;}
+    else if(i>=startDow+dim){day=i-startDow-dim+1;month=calM===11?0:calM+1;year=calM===11?calY+1:calY;other=true;}
+    else{day=i-startDow+1;month=calM;year=calY;}
+    const key=`${year}-${pad(month+1)}-${pad(day)}`;
+    const isToday=year===today.getFullYear()&&month===today.getMonth()&&day===today.getDate();
+    if(other)cell.classList.add('other-month');
+    if(isToday)cell.classList.add('today');
+    if(key===calSel)cell.classList.add('selected');
+    const evs=events[key]||[];
+    cell.innerHTML=`<span class="cal-day-num">${day}</span><div class="cal-day-events">${evs.slice(0,2).map(e=>`<div class="cal-ev-dot ev-c${e.c}">${e.name}</div>`).join('')}${evs.length>2?`<div class="cal-ev-dot ev-c${evs[2].c}">+${evs.length-2}</div>`:''}</div>`;
+    cell.addEventListener('click',()=>{calSel=key;document.getElementById('ev-date').value=key;renderCal();renderEvents();});
+    container.appendChild(cell);
+  }
+}
+
+function renderEvents(){
+  const evs=events[calSel]||[];
+  const d=new Date(calSel+'T12:00:00');
+  document.getElementById('cal-sel-title').textContent=`${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]}`;
+  const colors=['#4fffb0','#00bfff','#a78bfa','#ff6b35'];
+  document.getElementById('cal-ev-list').innerHTML=evs.length
+    ?evs.map((e,i)=>`<div class="ev-item"><div class="ev-bar" style="background:${colors[e.c]}"></div><div class="ev-info"><div class="ev-name">${e.name}</div><div class="ev-time">${e.time||'Toute la journée'}</div></div><button class="ev-del" onclick="delEvent('${calSel}',${i})">✕</button></div>`).join('')
+    :'<div class="no-events">Aucun événement ce jour</div>';
+}
+
+function addEvent(){
+  const name=document.getElementById('ev-name').value.trim();
+  const date=document.getElementById('ev-date').value;
+  const time=document.getElementById('ev-time').value;
+  if(!name||!date)return;
+  if(!events[date])events[date]=[];
+  events[date].push({name,time,c:activeColor});
+  document.getElementById('ev-name').value='';
+  document.getElementById('ev-time').value='';
+  calSel=date; renderCal(); renderEvents();
+}
+
+function delEvent(key,i){
+  events[key].splice(i,1);
+  if(!events[key].length)delete events[key];
+  renderCal(); renderEvents();
+}
+
+function selColor(btn){
+  document.querySelectorAll('.cp').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel'); activeColor=parseInt(btn.dataset.c);
+}
+
+/* INIT */
+async function init(){
+  buildDevices(); buildEnergy(); buildNews(); calInit();
+  await fetchWeather();
+}
+init();
+setInterval(fetchWeather,10*60*1000);
+</script>
 </body>
 </html>
- 
