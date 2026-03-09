@@ -1,241 +1,526 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
-
+        content="default-src 'self' 'unsafe-inline' https://api.open-meteo.com https://api.allorigins.win https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src *;">
   <title>SmartHome</title>
-  <link rel="stylesheet" href="../styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles/main.css">
 </head>
-
 <body>
- 
+
+  <!-- ═══════════════════════════════════════════════
+       TOPBAR
+  ════════════════════════════════════════════════ -->
   <header class="topbar">
     <div class="logo">SmartHome</div>
- 
-    <div class="datetime">
-      <div id="date"></div>
-      <div id="time"></div>
-    </div>
- 
-    <div class="search">
-      <input type="text" placeholder="Search devices..." />
-    </div>
- 
-    <div class="user">
-      <div class="avatar">JD</div>
-      <div>
-        <div class="name">John Doe</div>
-        <div class="role">Admin</div>
+    <div class="topbar-right">
+      <div class="topbar-clock" id="topbar-clock">--:--</div>
+      <div class="online-badge">
+        <div class="dot-pulse"></div>
+        <span>En ligne</span>
       </div>
     </div>
   </header>
- 
-  <main class="dashboard">
- 
-    <!-- LIGHTS -->
-    <section class="card">
-      <h2>Lights</h2>
-      <div class="device-grid">
-        <div class="device active">
-          <p>Living Room</p>
-          <span>75%</span>
+
+  <!-- ═══════════════════════════════════════════════
+       APP BODY
+  ════════════════════════════════════════════════ -->
+  <div class="app-body">
+
+    <!-- SIDEBAR — data-page déclenché par NavigationView -->
+    <nav class="sidebar">
+      <button class="nav-btn" data-page="settings">
+      ⚙️<span class="tooltip">Paramètres</span>
+      </button>
+      <button class="nav-btn active" data-page="home">
+        🏠<span class="tooltip">Accueil</span>
+      </button>
+      <button class="nav-btn" data-page="devices">
+        💡<span class="tooltip">Appareils</span>
+      </button>
+      <button class="nav-btn" data-page="weather">
+        🌤<span class="tooltip">Météo</span>
+      </button>
+      <button class="nav-btn" data-page="energy">
+        ⚡<span class="tooltip">Énergie</span>
+      </button>
+      <button class="nav-btn" data-page="news">
+        📰<span class="tooltip">Actualités</span>
+      </button>
+      <button class="nav-btn" data-page="calendar">
+        📅<span class="tooltip">Calendrier</span>
+      </button>
+    </nav>
+
+    <!-- PAGES -->
+    <div class="pages">
+
+      <!-- ═══════════════════════════════════════════
+           PAGE : ACCUEIL (dashboard)
+      ════════════════════════════════════════════ -->
+      <div class="page active" id="page-home">
+        <div class="dash-greeting" id="dash-greeting">
+          Bonjour, <span>Smart Home</span> 🏠
         </div>
- 
-        <div class="device">
-          <p>Bedroom</p>
+
+        <div class="dash-grid">
+
+          <!-- Horloge — ClockView -->
+          <div class="dc dc-clock">
+            <div>
+              <div class="dc-clock-greeting" id="dash-ampm-greet">BONJOUR</div>
+              <div class="dc-clock-time">
+                <span id="h-hours">00</span>
+                <span class="dc-clock-sep">:</span>
+                <span id="h-minutes">00</span>
+              </div>
+              <div class="dc-clock-date" id="h-date">---</div>
+            </div>
+            <div class="dc-clock-stats">
+              <div class="dc-stat-row">
+                <span class="dc-stat-lbl">🌡 Température ext.</span>
+                <span class="dc-stat-val" id="h-temp">--°C</span>
+              </div>
+              <div class="dc-stat-row">
+                <span class="dc-stat-lbl">💡 Appareils actifs</span>
+                <span class="dc-stat-val" id="h-devices">0</span>
+              </div>
+              <div class="dc-stat-row">
+                <span class="dc-stat-lbl">⚡ Énergie aujourd'hui</span>
+                <span class="dc-stat-val" id="h-energy">-- kWh</span>
+              </div>
+              <div class="dc-stat-row">
+                <span class="dc-stat-lbl">📶 Réseau</span>
+                <span class="dc-stat-val" style="color:var(--accent)">Stable</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Météo — WeatherView -->
+          <div class="dc dc-weather">
+            <div class="dc-section-title">Météo — Lyon</div>
+            <div class="dc-weather-top">
+              <div class="dc-w-icon" id="h-w-icon">⏳</div>
+              <div class="dc-w-main">
+                <div class="dc-w-temp" id="h-w-temp">--°C</div>
+                <div class="dc-w-desc" id="h-w-desc">Chargement...</div>
+                <div class="dc-w-loc">Lyon, France</div>
+              </div>
+            </div>
+            <div class="dc-weather-stats">
+              <div class="dc-ws">
+                <div class="dc-ws-lbl">💧 HUMIDITÉ</div>
+                <div class="dc-ws-val" id="h-w-hum">--%</div>
+              </div>
+              <div class="dc-ws">
+                <div class="dc-ws-lbl">🌬 VENT</div>
+                <div class="dc-ws-val" id="h-w-wind">-- km/h</div>
+              </div>
+              <div class="dc-ws">
+                <div class="dc-ws-lbl">🌡 RESSENTI</div>
+                <div class="dc-ws-val" id="h-w-feels">--°C</div>
+              </div>
+            </div>
+            <div class="dc-forecast" id="h-forecast"></div>
+          </div>
+
+          <!-- Éclairage — DeviceView -->
+          <div class="dc dc-lights">
+            <div class="dc-section-title">Éclairage</div>
+            <div class="dc-lights-grid" id="h-lights"></div>
+          </div>
+
+          <!-- Énergie — EnergyView -->
+          <div class="dc dc-energy">
+            <div class="dc-section-title">Énergie</div>
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div>
+                <div class="dc-energy-big" id="h-e-total">-- kWh</div>
+                <div class="dc-energy-sub">consommation aujourd'hui</div>
+                <div class="dc-energy-badge" id="h-e-diff">---</div>
+              </div>
+            </div>
+            <div class="dc-mini-graph" id="h-e-bars"></div>
+            <div class="dc-energy-row">
+              <div class="dc-estat">
+                <div class="dc-estat-lbl">Ce mois</div>
+                <div class="dc-estat-val">187 kWh</div>
+              </div>
+              <div class="dc-estat">
+                <div class="dc-estat-lbl">Coût estimé</div>
+                <div class="dc-estat-val">€ 42</div>
+              </div>
+              <div class="dc-estat">
+                <div class="dc-estat-lbl">Économies</div>
+                <div class="dc-estat-val" style="color:var(--accent)">↓ 8%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Résumé : Clima + Volets + Actu -->
+          <div class="dc dc-summary">
+
+            <div class="dc-section-title">Climatisation</div>
+            <div class="dc-clim-row">
+              <div class="dc-clim-circle">
+                <!-- id mis à jour par DeviceView -->
+                <div class="dc-clim-temp" id="h-clim">22°</div>
+              </div>
+              <div class="dc-clim-info">
+                <div class="dc-clim-lbl">Température consigne</div>
+                <div class="dc-clim-mode">MODE AUTO</div>
+                <div style="display:flex;gap:5px;margin-top:8px">
+                  <!-- data-temp-delta géré par DeviceView, sans onclick -->
+                  <button data-temp-delta="-1"
+                          style="flex:1;padding:4px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:13px">−</button>
+                  <button data-temp-delta="1"
+                          style="flex:1;padding:4px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:13px">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="dc-section-title">Volets</div>
+            <!-- Rempli par DeviceView -->
+            <div class="dc-blinds-row" id="h-blinds"></div>
+
+            <div class="dc-section-title">Dernière actualité</div>
+            <!-- Rempli par NewsView -->
+            <div class="dc-news-latest" id="h-news-latest">
+              <div class="dc-news-tag">MONDE</div>
+              <div class="dc-news-title">Chargement des actualités...</div>
+            </div>
+
+          </div><!-- /dc-summary -->
+        </div><!-- /dash-grid -->
+      </div><!-- /page-home -->
+
+
+      <!-- ═══════════════════════════════════════════
+           PAGE : APPAREILS
+      ════════════════════════════════════════════ -->
+      <div class="page" id="page-devices">
+
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Éclairage</div>
+          <!-- Rempli par DeviceView -->
+          <div class="devices-grid" id="lights-grid"></div>
         </div>
- 
-        <div class="device active">
-          <p>Kitchen</p>
-          <span>100%</span>
+
+        <div class="devices-section-grid">
+
+          <div class="card">
+            <div class="card-title">Volets</div>
+            <!-- Rempli par DeviceView -->
+            <div class="blinds-list" id="blinds-list"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Climatisation</div>
+            <div class="climate-wrap">
+              <div class="temp-circle">
+                <!-- id mis à jour par DeviceView -->
+                <div class="temp-val" id="clim-temp">22°</div>
+              </div>
+              <div style="flex:1">
+                <div class="temp-btns">
+                  <!-- data-temp-delta géré par DeviceView, sans onclick -->
+                  <button class="temp-btn" data-temp-delta="-1">−</button>
+                  <button class="temp-btn" data-temp-delta="1">+</button>
+                </div>
+                <div class="mode-row">
+                  <!-- data-clim-mode géré par DeviceView, sans onclick -->
+                  <button class="mode-btn" data-clim-mode="CHALEUR">CHALEUR</button>
+                  <button class="mode-btn" data-clim-mode="FROID">FROID</button>
+                  <button class="mode-btn active" data-clim-mode="AUTO">AUTO</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
- 
-        <div class="device">
-          <p>Bathroom</p>
+      </div><!-- /page-devices -->
+      <!-- ═══════════════════════════════════════════
+     PAGE : MÉTÉO
+════════════════════════════════════════════ -->
+<div class="page" id="page-weather">
+
+  <div class="weather-hero">
+
+    <div class="weather-current">
+      <div class="w-city">LYON, FRANCE</div>
+
+      <div class="w-icon" id="w-icon">⏳</div>
+      <div class="w-temp" id="w-temp">--°C</div>
+      <div class="w-desc" id="w-desc">Chargement...</div>
+
+      <div class="w-stats">
+
+        <div class="w-stat">
+          <div class="w-stat-lbl">💧 HUMIDITÉ</div>
+          <div class="w-stat-val" id="w-hum">--%</div>
         </div>
+
+        <div class="w-stat">
+          <div class="w-stat-lbl">🌬 VENT</div>
+          <div class="w-stat-val" id="w-wind">-- km/h</div>
+        </div>
+
+        <div class="w-stat">
+          <div class="w-stat-lbl">🌡 RESSENTI</div>
+          <div class="w-stat-val" id="w-feels">--°C</div>
+        </div>
+
+        <div class="w-stat">
+          <div class="w-stat-lbl">🌅 LEVER</div>
+          <div class="w-stat-val">06:52</div>
+        </div>
+
       </div>
-    </section>
- 
-    <!-- BLINDS -->
-    <section class="card">
-      <h2>Blinds</h2>
- 
-      <div class="blind">
-        <p>Living Room - 100%</p>
-        <div class="progress"><div style="width:100%"></div></div>
-      </div>
- 
-      <div class="blind">
-        <p>Bedroom - 50%</p>
-        <div class="progress"><div style="width:50%"></div></div>
-      </div>
- 
-      <div class="blind">
-        <p>Kitchen - 0%</p>
-        <div class="progress"><div style="width:0%"></div></div>
-      </div>
- 
-    </section>
- 
-    <!-- CLIMATE -->
-    <section class="card climate">
-      <h2>Climate</h2>
- 
-      <div class="circle">
-        <div class="temperature">22°</div>
-      </div>
- 
-      <div class="climate-buttons">
-        <button>-</button>
-        <button>+</button>
-      </div>
- 
-      <div class="mode-buttons">
-        <button>HEAT</button>
-        <button>COOL</button>
-        <button class="active">AUTO</button>
-      </div>
-    </section>
- 
-    <!-- WEATHER -->
-    <section class="card">
-      <h2>Weather</h2>
-      <div class="weather-temp">23°C</div>
-      <p>Partly Cloudy</p>
- 
-      <div class="weather-stats">
-        <div>Humidity: 65%</div>
-        <div>Wind: 12 km/h</div>
-      </div>
-    </section>
- 
-  </main>
- 
-    <!-- ===== BOTTOM DARK SECTION ===== -->
-<section class="bottom-dark">
- 
-  <!-- LEFT : DAILY NEWS -->
-  <div class="daily-news">
-    <div class="news-header">
-      <div class="news-icon">📰</div>
-      <h2>Daily News</h2>
     </div>
- 
-    <div class="news-item">
-      <h3>Smart Home Market Expected to Grow 25% This Year</h3>
-      <div class="news-info">
-        <span>Tech News</span>
-        <span>2 hours ago</span>
+
+
+    <!-- PREVISIONS -->
+    <div class="card">
+      <div class="card-title">Prévisions 5 jours</div>
+
+      <div class="forecast-list" id="forecast-list">
+
+        <div class="fc-row">
+          <div class="fc-day">---</div>
+          <div class="fc-icon">⏳</div>
+          <div class="fc-desc">Chargement...</div>
+          <div class="fc-temps">--° / --°</div>
+        </div>
+
       </div>
-      <span class="badge tech">Technology</span>
     </div>
- 
-    <div class="news-item">
-      <h3>New Energy Saving Tips: Reduce Bills by 30%</h3>
-      <div class="news-info">
-        <span>Green Living</span>
-        <span>5 hours ago</span>
-      </div>
-      <span class="badge life">Lifestyle</span>
-    </div>
- 
-    <div class="news-item">
-      <h3>IoT Security: Best Practices for Smart Homes</h3>
-      <div class="news-info">
-        <span>Security Today</span>
-        <span>8 hours ago</span>
-      </div>
-      <span class="badge security">Security</span>
-    </div>
+
   </div>
- 
-  <!-- RIGHT : SYSTEM OVERVIEW -->
-  <div class="system-box">
-    <h2>System Overview</h2>
- 
-    <div class="overview-grid">
- 
-      <div class="overview-card">
-        <div class="icon green">📈</div>
-        <div>
-          <h3>24</h3>
-          <p>Active Devices</p>
-        </div>
+
+
+  <!-- ═══════════════════════════════════
+       GRAPHIQUE MÉTÉO JOURNÉE
+  ═══════════════════════════════════ -->
+  <div class="card">
+
+    <div class="card-title">Température aujourd'hui</div>
+
+    <div class="weather-day-chart">
+
+      <!-- Axe vertical -->
+      <div class="weather-chart-y">
+        <span>30°</span>
+        <span>25°</span>
+        <span>20°</span>
+        <span>15°</span>
+        <span>10°</span>
       </div>
- 
-      <div class="overview-card">
-        <div class="icon blue">📶</div>
-        <div>
-          <h3>Stable</h3>
-          <p>Network Status</p>
-        </div>
+
+      <div class="weather-chart-inner">
+
+        <!-- Graphique généré par WeatherView -->
+        <div id="weather-chart"></div>
+
       </div>
- 
-      <div class="overview-card">
-        <div class="icon orange">⚠</div>
-        <div>
-          <h3>2</h3>
-          <p>Alerts</p>
-        </div>
-      </div>
- 
+
     </div>
+
   </div>
- 
-</section>
- 
-<!-- ===== ENERGY USAGE SECTION ===== -->
-<section class="energy-usage">
-  <h2>Energy Usage</h2>
-  <p class="subtitle">Today's consumption</p>
- 
-  <!-- Graph area with labels -->
-  <div class="graph-container">
-    <!-- Y-axis labels -->
-    <div class="y-axis">
-      <span>0 kWh</span>
-      <span>2 kWh</span>
-      <span>4 kWh</span>
-      <span>6 kWh</span>
-      <span>8 kWh</span>
-    </div>
- 
-    <!-- Graph bars and X-axis -->
-    <div class="graph-content">
-      <div class="bars">
-        <div class="bar" style="height: 20%;"></div>
-        <div class="bar" style="height: 45%;"></div>
-        <div class="bar" style="height: 70%;"></div>
-        <div class="bar" style="height: 90%;"></div>
-        <div class="bar" style="height: 60%;"></div>
-        <div class="bar" style="height: 40%;"></div>
-        <div class="bar" style="height: 25%;"></div>
+
+</div>
+      
+
+
+      <!-- ═══════════════════════════════════════════
+           PAGE : ÉNERGIE
+      ════════════════════════════════════════════ -->
+      <div class="page" id="page-energy">
+
+        <div class="energy-top">
+          <div class="energy-stat-card">
+            <div class="es-icon">⚡</div>
+            <!-- Mis à jour par EnergyView -->
+            <div class="es-val" id="es-today">-- kWh</div>
+            <div class="es-lbl">Aujourd'hui</div>
+            <div class="es-change down" id="es-diff">---</div>
+          </div>
+          <div class="energy-stat-card">
+            <div class="es-icon">📅</div>
+            <div class="es-val">187 kWh</div>
+            <div class="es-lbl">Ce mois</div>
+            <div class="es-change down">↓ 8% vs mois dernier</div>
+          </div>
+          <div class="energy-stat-card">
+            <div class="es-icon">🌿</div>
+            <div class="es-val">€ 42</div>
+            <div class="es-lbl">Coût estimé</div>
+            <div class="es-change down">↓ économies ce mois</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Consommation horaire (simulée)</div>
+          <div class="graph-wrap">
+            <div class="y-axis">
+              <span>8kWh</span>
+              <span>6kWh</span>
+              <span>4kWh</span>
+              <span>2kWh</span>
+              <span>0</span>
+            </div>
+            <div class="graph-inner">
+              <!-- Rempli par EnergyView -->
+              <div class="bars-row" id="energy-bars"></div>
+              <div class="x-axis">
+                <span>00:00</span><span>04:00</span><span>08:00</span>
+                <span>12:00</span><span>16:00</span><span>20:00</span><span>24:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /page-energy -->
+
+
+      <!-- ═══════════════════════════════════════════
+           PAGE : ACTUALITÉS
+      ════════════════════════════════════════════ -->
+      <div class="page" id="page-news">
+        <div class="card-title">Actualités Mondiales</div>
+        <!-- Rempli par NewsView -->
+        <div class="news-grid" id="news-grid"></div>
       </div>
- 
-      <div class="x-axis">
-        <span>00:00</span>
-        <span>04:00</span>
-        <span>08:00</span>
-        <span>12:00</span>
-        <span>16:00</span>
-        <span>20:00</span>
-        <span>24:00</span>
-      </div>
+
+
+      <!-- ═══════════════════════════════════════════
+           PAGE : CALENDRIER
+      ════════════════════════════════════════════ -->
+      <div class="page" id="page-calendar">
+        <div class="cal-layout">
+
+          <div class="cal-main">
+            <div class="cal-header">
+              <!-- id ciblés par CalendarView -->
+              <button class="cal-nav-btn" id="cal-prev">‹</button>
+              <div class="cal-month-lbl" id="cal-month-lbl">---</div>
+              <button class="cal-nav-btn" id="cal-next">›</button>
+            </div>
+            <div class="cal-weekdays">
+              <div class="cal-wd">LUN</div>
+              <div class="cal-wd">MAR</div>
+              <div class="cal-wd">MER</div>
+              <div class="cal-wd">JEU</div>
+              <div class="cal-wd">VEN</div>
+              <div class="cal-wd" style="color:var(--warn)">SAM</div>
+              <div class="cal-wd" style="color:var(--warn)">DIM</div>
+            </div>
+            <!-- Cellules générées par CalendarView -->
+            <div class="cal-days" id="cal-days"></div>
+          </div>
+
+          <div class="cal-side">
+
+            <div class="cal-events-panel">
+              <div class="cal-sel-title" id="cal-sel-title">SÉLECTIONNEZ UN JOUR</div>
+              <!-- Rempli par CalendarView -->
+              <div id="cal-ev-list">
+                <div class="no-events">Aucun événement</div>
+              </div>
+            </div>
+
+            <div class="add-ev-card">
+              <div class="card-title">+ Nouvel événement</div>
+              <div class="form-col">
+                <input class="fi" id="ev-name" placeholder="Nom de l'événement"/>
+                <div class="form-row2">
+                  <input class="fi" id="ev-date" type="date" style="flex:1"/>
+                  <input class="fi" id="ev-time" type="time" style="flex:1;width:auto"/>
+                </div>
+                <!-- data-c géré par CalendarView -->
+                <div class="color-row" id="color-picker">
+                  <button class="cp sel" data-c="0" style="background:var(--accent)"></button>
+                  <button class="cp"     data-c="1" style="background:var(--accent2)"></button>
+                  <button class="cp"     data-c="2" style="background:var(--purple)"></button>
+                  <button class="cp"     data-c="3" style="background:var(--warn)"></button>
+                </div>
+                <!-- id ciblé par CalendarView -->
+                <button class="add-btn-full" id="btn-add-event">AJOUTER L'ÉVÉNEMENT</button>
+              </div>
+            </div>
+
+          </div><!-- /cal-side -->
+        </div><!-- /cal-layout -->
+      </div><!-- /page-calendar -->
+
+      <div class="page" id="page-settings">
+
+  <div class="card">
+    <div class="card-title">Connexion Home Assistant</div>
+
+    <input id="ha-url" class="fi" placeholder="http://192.168.1.50:8123">
+    <input id="ha-token" class="fi" placeholder="Token Home Assistant">
+
+    <button id="btn-save-ha" class="add-btn-full">
+      Enregistrer
+    </button>
+  </div>
+
+
+  <div class="card">
+    <div class="card-title">Ajouter un appareil</div>
+
+    <input id="device-name" class="fi" placeholder="Nom appareil">
+    <input id="device-entity" class="fi" placeholder="light.salon">
+
+    <select id="device-type" class="fi">
+      <option value="light">Lumière</option>
+      <option value="switch">Interrupteur</option>
+      <option value="cover">Volet</option>
+      <option value="climate">Thermostat</option>
+      <option value="son">Son</option>
+      <option value="climatisation">Climatisation</option>
+    </select>
+
+    <select id="device-icon" class="fi">
+      <option value="💡">💡 Lumière</option>
+      <option value="🔌">🔌 Prise</option>
+      <option value="📺">📺 TV</option>
+      <option value="🪟">🪟 Volet</option>
+      <option value="❄️">❄️ Climatisation</option>
+      <option value="🌡️">🌡️ Thermostat</option>
+      <option value="🔊">🔊 Son</option>
+    </select>
+
+    <button id="btn-add-device" class="add-btn-full">
+      Ajouter appareil
+    </button>
+  </div>
+
+  <div class="card">
+
+  <div class="card-title">
+    Appareils personnalisés
+  </div>
+
+  <div id="custom-devices-list">
+
+    <div style="opacity:.6">
+      Aucun appareil ajouté
     </div>
+
   </div>
- 
-  <!-- Stats footer -->
-  <div class="energy-stats">
-    <div class="total">45.8 kWh</div>
-    <div class="comparison">↓ 12% vs yesterday</div>
-  </div>
-</section>
- 
-<script type="module" src="../renderer.js"></script>
+
+</div>
+
+</div>
+    </div><!-- /pages -->
+  </div><!-- /app-body -->
+
+  <!-- Point d'entrée unique — aucun JS inline, app.js orchestre tout -->
+  <script type="module" src="../app.js"></script>
 
 </body>
 </html>
- 

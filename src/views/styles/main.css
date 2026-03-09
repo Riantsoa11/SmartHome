@@ -1,0 +1,1759 @@
+/* ============================================================
+   main.css — SmartHome
+   Organisé par sections :
+     1.  Reset & Variables CSS
+     2.  Layout global
+     3.  Topbar
+     4.  Sidebar & Navigation
+     5.  Pages (système de routing)
+     6.  Card (composant générique)
+     7.  Page — Accueil (dashboard)
+          7a. Grille principale
+          7b. Carte Horloge
+          7c. Carte Météo
+          7d. Carte Éclairage
+          7e. Carte Énergie
+          7f. Carte Résumé (Clima + Volets + Actu)
+     8.  Page — Appareils
+     9.  Page — Météo
+     10. Page — Énergie
+     11. Page — Actualités
+     12. Page — Calendrier
+     13. Flip Clock (renderer.js)
+     14. Responsive
+   ============================================================ */
+
+
+/* ============================================================
+   1. RESET & VARIABLES CSS
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Couleurs */
+  --bg:       #0a0c10;
+  --surface:  #111318;
+  --surface2: #181c24;
+  --border:   #1e2530;
+  --accent:   #4fffb0;
+  --accent2:  #00bfff;
+  --warn:     #ff6b35;
+  --purple:   #a78bfa;
+  --text:     #e8edf5;
+  --muted:    #5a6478;
+
+  /* Typographie */
+  --font-main: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  /* Dimensions */
+  --radius:  14px;
+  --sidebar: 64px;
+  --topbar:  52px;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background:  var(--bg);
+  color:       var(--text);
+  font-family: var(--font-main);
+  display:     flex;
+  flex-direction: column;
+}
+
+
+/* ============================================================
+   2. LAYOUT GLOBAL
+   ============================================================ */
+
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  height: calc(100vh - var(--topbar));
+}
+
+.pages {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+
+/* ============================================================
+   3. TOPBAR
+   ============================================================ */
+
+.topbar {
+  height:      var(--topbar);
+  flex-shrink: 0;
+  display:     flex;
+  align-items: center;
+  justify-content: space-between;
+  padding:     0 20px 0 calc(var(--sidebar) + 20px);
+  background:  var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index:     50;
+}
+
+.logo {
+  font-family:    var(--font-mono);
+  font-size:      13px;
+  font-weight:    700;
+  letter-spacing: 4px;
+  color:          var(--accent);
+}
+
+.topbar-right {
+  display:     flex;
+  align-items: center;
+  gap:         20px;
+}
+
+.topbar-clock {
+  font-family: var(--font-mono);
+  font-size:   12px;
+  color:       var(--muted);
+}
+
+.online-badge {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+  font-size:   11px;
+  color:       var(--muted);
+}
+
+.dot-pulse {
+  width:        7px;
+  height:       7px;
+  border-radius: 50%;
+  background:   var(--accent);
+  box-shadow:   0 0 5px var(--accent);
+  animation:    pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .3; }
+}
+
+
+/* ============================================================
+   4. SIDEBAR & NAVIGATION
+   ============================================================ */
+
+.sidebar {
+  width:        var(--sidebar);
+  flex-shrink:  0;
+  background:   var(--surface);
+  border-right: 1px solid var(--border);
+  display:      flex;
+  flex-direction: column;
+  align-items:  center;
+  padding:      16px 0;
+  gap:          6px;
+  z-index:      40;
+}
+
+.nav-btn {
+  width:         42px;
+  height:        42px;
+  border-radius: 10px;
+  border:        none;
+  background:    transparent;
+  color:         var(--muted);
+  font-size:     18px;
+  cursor:        pointer;
+  transition:    all .2s;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  position:      relative;
+}
+
+.nav-btn:hover {
+  background: var(--surface2);
+  color:      var(--text);
+}
+
+.nav-btn.active {
+  background: rgba(79, 255, 176, .12);
+  color:      var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(79, 255, 176, .25);
+}
+
+/* Tooltip au survol */
+.tooltip {
+  position:       absolute;
+  left:           calc(100% + 10px);
+  top:            50%;
+  transform:      translateY(-50%);
+  background:     var(--surface2);
+  border:         1px solid var(--border);
+  border-radius:  6px;
+  padding:        4px 10px;
+  font-size:      11px;
+  white-space:    nowrap;
+  pointer-events: none;
+  opacity:        0;
+  transition:     opacity .15s;
+  font-family:    var(--font-mono);
+  color:          var(--text);
+}
+
+.nav-btn:hover .tooltip {
+  opacity: 1;
+}
+
+
+/* ============================================================
+   5. PAGES — système de routing CSS
+   ============================================================ */
+
+.page {
+  position:   absolute;
+  inset:      0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  opacity:    0;
+  pointer-events: none;
+  transform:  translateY(8px);
+  transition: opacity .25s, transform .25s;
+  padding:    20px;
+}
+
+.page.active {
+  opacity:        1;
+  pointer-events: all;
+  transform:      translateY(0);
+}
+
+/* Overrides de padding/display par page */
+#page-home {
+  display:   none;
+  flex-direction: column;
+  gap:       0;
+  padding:   0 !important;
+  height:    100%;
+  overflow:  hidden;
+}
+
+#page-home.active    { display: flex; }
+#page-devices.active { display: flex; }
+#page-weather.active { display: flex; }
+#page-energy.active  { display: flex; }
+#page-news.active    { display: flex; }
+#page-calendar.active { display: flex; }
+
+#page-devices,
+#page-weather,
+#page-energy,
+#page-news,
+#page-calendar {
+  display:        none;
+  flex-direction: column;
+  gap:            16px;
+}
+
+
+/* ============================================================
+   6. CARD (composant générique)
+   ============================================================ */
+
+.card {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
+  padding:       18px;
+}
+
+.card-title {
+  font-size:      10px;
+  font-weight:    600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color:          var(--muted);
+  margin-bottom:  14px;
+}
+
+
+/* ============================================================
+   7. PAGE — ACCUEIL (dashboard)
+   ============================================================ */
+
+/* 7a. Grille principale */
+
+.dash-greeting {
+  padding:   14px 20px 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color:     var(--text);
+  flex-shrink: 0;
+}
+
+.dash-greeting span {
+  color: var(--accent);
+}
+
+.dash-grid {
+  flex: 1;
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 260px 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+/* Carte dashboard base */
+.dc {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
+  overflow:      hidden;
+  position:      relative;
+  transition:    border-color .2s;
+}
+
+.dc:hover {
+  border-color: var(--muted);
+}
+
+.dc-section-title {
+  font-size:      9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color:          var(--muted);
+  margin-bottom:  4px;
+}
+
+/* 7b. Carte Horloge */
+
+.dc-clock {
+  grid-column: 1;
+  grid-row:    1 / 3;
+  display:     flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding:     20px;
+  background:  linear-gradient(160deg, #0d1117, #0f1a2e);
+}
+
+.dc-clock-greeting {
+  font-size:      11px;
+  color:          var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.dc-clock-time {
+  font-family: var(--font-mono);
+  font-size:   64px;
+  font-weight: 700;
+  color:       var(--text);
+  line-height: 1;
+}
+
+.dc-clock-sep {
+  color:     var(--accent);
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: .8; }
+  50%       { opacity: .1; }
+}
+
+.dc-clock-date {
+  font-family: var(--font-mono);
+  font-size:   11px;
+  color:       var(--muted);
+  margin-top:  4px;
+}
+
+.dc-clock-stats {
+  display:        flex;
+  flex-direction: column;
+  gap:            8px;
+}
+
+.dc-stat-row {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  background:      var(--surface2);
+  border:          1px solid var(--border);
+  border-radius:   9px;
+  padding:         9px 14px;
+}
+
+.dc-stat-lbl {
+  font-size: 11px;
+  color:     var(--muted);
+}
+
+.dc-stat-val {
+  font-family: var(--font-mono);
+  font-size:   13px;
+  font-weight: 700;
+  color:       var(--accent);
+}
+
+/* 7c. Carte Météo */
+
+.dc-weather {
+  grid-column: 2;
+  grid-row:    1;
+  padding:     18px;
+  display:     flex;
+  flex-direction: column;
+  gap:         10px;
+}
+
+.dc-weather-top {
+  display:     flex;
+  align-items: center;
+  gap:         14px;
+}
+
+.dc-w-icon {
+  font-size:   48px;
+  flex-shrink: 0;
+}
+
+.dc-w-temp {
+  font-family: var(--font-mono);
+  font-size:   40px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dc-w-desc {
+  font-size:      13px;
+  color:          var(--muted);
+  letter-spacing: .5px;
+}
+
+.dc-w-loc {
+  font-size:      9px;
+  letter-spacing: 3px;
+  color:          var(--accent);
+  text-transform: uppercase;
+  margin-top:     3px;
+}
+
+.dc-weather-stats {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   7px;
+}
+
+.dc-ws {
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 8px;
+  padding:       8px 10px;
+}
+
+.dc-ws-lbl {
+  font-size:      9px;
+  color:          var(--muted);
+  letter-spacing: 1px;
+  margin-bottom:  3px;
+}
+
+.dc-ws-val {
+  font-family: var(--font-mono);
+  font-size:   13px;
+}
+
+.dc-forecast {
+  display: flex;
+  gap:     6px;
+}
+
+.dc-fc {
+  flex:          1;
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 8px;
+  padding:       6px 4px;
+  text-align:    center;
+}
+
+.dc-fc-day {
+  font-family: var(--font-mono);
+  font-size:   8px;
+  color:       var(--muted);
+}
+
+.dc-fc-ico {
+  font-size:  16px;
+  margin:     3px 0;
+}
+
+.dc-fc-tmp {
+  font-family: var(--font-mono);
+  font-size:   9px;
+  color:       var(--text);
+}
+
+/* ── Graphique météo journée ── */
+.weather-day-chart {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.weather-chart-y {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  padding-bottom: 22px; /* aligne avec l'axe X */
+  min-width: 28px;
+  text-align: right;
+}
+
+.weather-chart-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#weather-chart {
+  flex: 1;
+  min-height: 160px;
+  position: relative;
+}
+
+#weather-chart svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Points de données sur la courbe */
+.wc-dot-group text {
+  font-size: 9px;
+  fill: var(--accent, #7eb8f7);
+}
+
+.weather-chart-x {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* 7d. Carte Éclairage */
+
+.dc-lights {
+  grid-column: 3;
+  grid-row:    1;
+  padding:     18px;
+  display:     flex;
+  flex-direction: column;
+  gap:         10px;
+}
+
+.dc-lights-grid {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   7px;
+  flex:                  1;
+  align-content:         start;
+}
+
+.dc-light {
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 9px;
+  padding:       10px 8px;
+  cursor:        pointer;
+  transition:    all .18s;
+  text-align:    center;
+}
+
+.dc-light.on {
+  border-color: var(--accent);
+  background:   rgba(79, 255, 176, .06);
+}
+
+.dc-light:hover {
+  transform: translateY(-2px);
+}
+
+.dc-light-ico {
+  font-size:     22px;
+  margin-bottom: 5px;
+}
+
+.dc-light-name {
+  font-size:     10px;
+  font-weight:   600;
+  white-space:   nowrap;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+}
+
+.dc-light-val {
+  font-family: var(--font-mono);
+  font-size:   9px;
+  color:       var(--accent);
+  margin-top:  2px;
+}
+
+.dc-light-off {
+  font-size:  9px;
+  color:      var(--muted);
+  margin-top: 2px;
+}
+
+/* 7e. Carte Énergie */
+
+.dc-energy {
+  grid-column: 2;
+  grid-row:    2;
+  padding:     18px;
+  display:     flex;
+  flex-direction: column;
+  gap:         10px;
+}
+
+.dc-energy-big {
+  font-family: var(--font-mono);
+  font-size:   36px;
+  font-weight: 700;
+  color:       var(--text);
+  line-height: 1;
+}
+
+.dc-energy-sub {
+  font-size: 11px;
+  color:     var(--muted);
+  margin-top: 2px;
+}
+
+.dc-energy-badge {
+  display:       inline-block;
+  font-family:   var(--font-mono);
+  font-size:     10px;
+  color:         var(--accent);
+  background:    rgba(79, 255, 176, .1);
+  border:        1px solid rgba(79, 255, 176, .2);
+  border-radius: 5px;
+  padding:       2px 8px;
+  margin-top:    4px;
+}
+
+.dc-mini-graph {
+  flex:        1;
+  display:     flex;
+  align-items: flex-end;
+  gap:         4px;
+  min-height:  0;
+}
+
+.dc-bar {
+  flex:          1;
+  border-radius: 3px 3px 0 0;
+  background:    var(--accent);
+  opacity:       .6;
+  min-height:    4px;
+  transition:    opacity .2s;
+  cursor:        pointer;
+}
+
+.dc-bar:hover {
+  opacity: 1;
+}
+
+.dc-energy-row {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   7px;
+}
+
+.dc-estat {
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 8px;
+  padding:       8px 10px;
+}
+
+.dc-estat-lbl {
+  font-size: 9px;
+  color:     var(--muted);
+}
+
+.dc-estat-val {
+  font-family: var(--font-mono);
+  font-size:   13px;
+  font-weight: 700;
+  margin-top:  2px;
+}
+
+/* 7f. Carte Résumé (Clima + Volets + Actu) */
+
+.dc-summary {
+  grid-column: 3;
+  grid-row:    2;
+  padding:     18px;
+  display:     flex;
+  flex-direction: column;
+  gap:         12px;
+}
+
+/* Climatisation */
+.dc-clim-row {
+  display:     flex;
+  align-items: center;
+  gap:         14px;
+}
+
+.dc-clim-circle {
+  width:         68px;
+  height:        68px;
+  border-radius: 50%;
+  border:        2px solid var(--accent);
+  box-shadow:    0 0 18px rgba(79, 255, 176, .15);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  flex-shrink:   0;
+}
+
+.dc-clim-temp {
+  font-family: var(--font-mono);
+  font-size:   20px;
+  font-weight: 700;
+  color:       var(--accent);
+}
+
+.dc-clim-info {
+  flex: 1;
+}
+
+.dc-clim-lbl {
+  font-size:      9px;
+  color:          var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.dc-clim-mode {
+  font-size:   11px;
+  color:       var(--accent2);
+  margin-top:  3px;
+  font-family: var(--font-mono);
+}
+
+/* Volets */
+.dc-blinds-row {
+  display:        flex;
+  flex-direction: column;
+  gap:            5px;
+}
+
+.dc-blind-mini {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  font-size:   11px;
+}
+
+.dc-blind-name {
+  width:       70px;
+  color:       var(--muted);
+  font-size:   10px;
+  flex-shrink: 0;
+}
+
+.dc-blind-bar {
+  flex:          1;
+  height:        4px;
+  background:    var(--border);
+  border-radius: 2px;
+  overflow:      hidden;
+}
+
+.dc-blind-fill {
+  height:        100%;
+  background:    var(--accent2);
+  border-radius: 2px;
+}
+
+.dc-blind-pct {
+  font-family: var(--font-mono);
+  font-size:   9px;
+  color:       var(--muted);
+  width:       30px;
+  text-align:  right;
+  flex-shrink: 0;
+}
+
+/* Dernière actu */
+.dc-news-latest {
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 9px;
+  padding:       10px 12px;
+  flex:          1;
+  overflow:      hidden;
+}
+
+.dc-news-tag {
+  font-size:      8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color:          var(--accent2);
+  margin-bottom:  5px;
+}
+
+.dc-news-title {
+  font-size:         11px;
+  font-weight:       600;
+  line-height:       1.5;
+  color:             var(--text);
+  display:           -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow:          hidden;
+}
+
+.dc-news-src {
+  font-size:   9px;
+  color:       var(--muted);
+  font-family: var(--font-mono);
+  margin-top:  5px;
+}
+
+
+/* ============================================================
+   8. PAGE — APPAREILS
+   ============================================================ */
+
+.devices-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap:                   12px;
+}
+
+.big-device-card {
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
+  padding:       16px;
+  cursor:        pointer;
+  transition:    all .2s;
+}
+
+.big-device-card.on {
+  border-color: var(--accent);
+  background:   rgba(79, 255, 176, .05);
+  box-shadow:   0 0 20px rgba(79, 255, 176, .05);
+}
+
+.big-device-card:hover {
+  transform: translateY(-2px);
+}
+
+.bd-top {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-bottom:   10px;
+}
+
+.bd-icon   { font-size: 24px; }
+.bd-name   { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.bd-room   { font-size: 10px; color: var(--muted); }
+.bd-val    { font-family: var(--font-mono); font-size: 11px; color: var(--accent); margin-top: 8px; }
+
+/* Toggle switch */
+.bd-toggle {
+  width:         34px;
+  height:        18px;
+  border-radius: 9px;
+  border:        none;
+  background:    var(--border);
+  cursor:        pointer;
+  position:      relative;
+  transition:    background .2s;
+}
+
+.bd-toggle::after {
+  content:       '';
+  position:      absolute;
+  top:           3px;
+  left:          3px;
+  width:         12px;
+  height:        12px;
+  border-radius: 50%;
+  background:    var(--muted);
+  transition:    all .2s;
+}
+
+.big-device-card.on .bd-toggle {
+  background: rgba(79, 255, 176, .3);
+}
+
+.big-device-card.on .bd-toggle::after {
+  left:       19px;
+  background: var(--accent);
+}
+
+/* Section grille appareils */
+.devices-section-grid {
+  display:               grid;
+  grid-template-columns: 1fr 1fr;
+  gap:                   16px;
+}
+
+/* Volets */
+.blinds-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            10px;
+}
+
+.blind-item {
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 10px;
+  padding:       14px;
+}
+
+.blind-lbl {
+  display:         flex;
+  justify-content: space-between;
+  font-size:       12px;
+  margin-bottom:   7px;
+}
+
+.blind-pct {
+  font-family: var(--font-mono);
+  font-size:   10px;
+  color:       var(--accent);
+}
+
+.prog-bar {
+  height:        5px;
+  background:    var(--border);
+  border-radius: 3px;
+  overflow:      hidden;
+  margin-bottom: 8px;
+}
+
+.prog-fill {
+  height:        100%;
+  background:    var(--accent);
+  border-radius: 3px;
+  transition:    width .4s;
+}
+
+.blind-btns {
+  display: flex;
+  gap:     6px;
+}
+
+.blind-btn {
+  flex:          1;
+  padding:       5px;
+  font-size:     9px;
+  font-family:   var(--font-mono);
+  border:        1px solid var(--border);
+  border-radius: 6px;
+  background:    var(--surface);
+  color:         var(--muted);
+  cursor:        pointer;
+  transition:    all .2s;
+  letter-spacing: 1px;
+}
+
+.blind-btn:hover {
+  border-color: var(--accent);
+  color:        var(--accent);
+}
+
+/* Climatisation */
+.climate-wrap {
+  display:     flex;
+  align-items: center;
+  gap:         20px;
+}
+
+.temp-circle {
+  width:         90px;
+  height:        90px;
+  border-radius: 50%;
+  border:        2px solid var(--accent);
+  box-shadow:    0 0 20px rgba(79, 255, 176, .15);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  flex-shrink:   0;
+}
+
+.temp-val {
+  font-family: var(--font-mono);
+  font-size:   24px;
+  font-weight: 700;
+  color:       var(--accent);
+}
+
+.temp-btns {
+  display:       flex;
+  gap:           7px;
+  margin-bottom: 10px;
+}
+
+.temp-btn {
+  width:         30px;
+  height:        30px;
+  border-radius: 7px;
+  border:        1px solid var(--border);
+  background:    var(--surface2);
+  color:         var(--text);
+  font-size:     15px;
+  cursor:        pointer;
+  transition:    all .2s;
+}
+
+.temp-btn:hover {
+  border-color: var(--accent);
+  color:        var(--accent);
+}
+
+.mode-row {
+  display: flex;
+  gap:     5px;
+}
+
+.mode-btn {
+  flex:          1;
+  padding:       5px;
+  font-size:     9px;
+  font-family:   var(--font-mono);
+  border:        1px solid var(--border);
+  border-radius: 6px;
+  background:    var(--surface2);
+  color:         var(--muted);
+  cursor:        pointer;
+  transition:    all .2s;
+  letter-spacing: 1px;
+}
+
+.mode-btn:hover {
+  border-color: var(--accent2);
+  color:        var(--accent2);
+}
+
+.mode-btn.active {
+  background:   rgba(0, 191, 255, .1);
+  border-color: var(--accent2);
+  color:        var(--accent2);
+}
+
+
+/* ============================================================
+   9. PAGE — MÉTÉO
+   ============================================================ */
+
+.weather-hero {
+  display:               grid;
+  grid-template-columns: 1fr 1fr;
+  gap:                   16px;
+}
+
+.weather-current {
+  background:    linear-gradient(135deg, #0d1117, #111827);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
+  padding:       24px;
+  text-align:    center;
+}
+
+.w-city {
+  font-size:      10px;
+  color:          var(--accent);
+  letter-spacing: 3px;
+  margin-bottom:  14px;
+}
+
+.w-icon  { font-size: 56px; margin-bottom: 8px; }
+
+.w-temp {
+  font-family: var(--font-mono);
+  font-size:   48px;
+  font-weight: 700;
+}
+
+.w-desc {
+  font-size:      13px;
+  color:          var(--muted);
+  margin-top:     4px;
+  letter-spacing: 1px;
+}
+
+.w-stats {
+  display:               grid;
+  grid-template-columns: 1fr 1fr;
+  gap:                   8px;
+  margin-top:            16px;
+  text-align:            left;
+}
+
+.w-stat {
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 9px;
+  padding:       9px 12px;
+}
+
+.w-stat-lbl {
+  font-size:      9px;
+  color:          var(--muted);
+  margin-bottom:  3px;
+  letter-spacing: 1px;
+}
+
+.w-stat-val {
+  font-family: var(--font-mono);
+  font-size:   14px;
+}
+
+/* Prévisions */
+.forecast-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            8px;
+}
+
+.fc-row {
+  background:      var(--surface2);
+  border:          1px solid var(--border);
+  border-radius:   9px;
+  padding:         9px 14px;
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+}
+
+.fc-day  { font-family: var(--font-mono); font-size: 10px; color: var(--muted); width: 36px; }
+.fc-icon { font-size: 20px; }
+.fc-desc { font-size: 11px; color: var(--muted); flex: 1; text-align: center; }
+
+.fc-temps { font-family: var(--font-mono); font-size: 11px; }
+.fc-max   { color: var(--text); }
+.fc-min   { color: var(--muted); }
+
+
+/* ============================================================
+   10. PAGE — ÉNERGIE
+   ============================================================ */
+
+.energy-top {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   14px;
+}
+
+.energy-stat-card {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
+  padding:       16px;
+}
+
+.es-icon { font-size: 22px; margin-bottom: 6px; }
+
+.es-val {
+  font-family: var(--font-mono);
+  font-size:   26px;
+  font-weight: 700;
+}
+
+.es-lbl    { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.es-change { font-size: 10px; margin-top: 5px; }
+.es-change.down { color: var(--accent); }
+
+/* Graphique */
+.graph-wrap {
+  display: flex;
+  gap:     10px;
+  height:  160px;
+}
+
+.y-axis {
+  display:        flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+  font-family:    var(--font-mono);
+  font-size:      9px;
+  color:          var(--muted);
+  padding-right:  6px;
+}
+
+.graph-inner {
+  flex:           1;
+  display:        flex;
+  flex-direction: column;
+}
+
+.bars-row {
+  flex:        1;
+  display:     flex;
+  align-items: flex-end;
+  gap:         5px;
+  padding-bottom: 4px;
+}
+
+.bar {
+  flex:          1;
+  border-radius: 4px 4px 0 0;
+  background:    var(--accent);
+  opacity:       .7;
+  min-height:    3px;
+  transition:    opacity .2s;
+  cursor:        pointer;
+}
+
+.bar:hover { opacity: 1; }
+
+.x-axis {
+  display:         flex;
+  justify-content: space-between;
+  font-family:     var(--font-mono);
+  font-size:       9px;
+  color:           var(--muted);
+  border-top:      1px solid var(--border);
+  padding-top:     5px;
+}
+
+
+/* ============================================================
+   11. PAGE — ACTUALITÉS
+   ============================================================ */
+
+.news-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap:                   14px;
+}
+
+.news-card {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
+  padding:       16px;
+  transition:    border-color .2s;
+}
+
+.news-card:hover {
+  border-color: var(--accent2);
+}
+
+.news-badge {
+  display:        inline-block;
+  font-size:      9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding:        2px 8px;
+  border-radius:  4px;
+  font-weight:    700;
+  margin-bottom:  8px;
+}
+
+.badge-tech     { background: rgba(0, 191, 255, .1);  color: var(--accent2); border: 1px solid rgba(0, 191, 255, .2); }
+.badge-life     { background: rgba(79, 255, 176, .1); color: var(--accent);  border: 1px solid rgba(79, 255, 176, .2); }
+.badge-security { background: rgba(255, 107, 53, .1); color: var(--warn);   border: 1px solid rgba(255, 107, 53, .2); }
+
+.news-title {
+  font-size:   13px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.news-meta {
+  font-size:   10px;
+  color:       var(--muted);
+  font-family: var(--font-mono);
+}
+
+
+/* ============================================================
+   12. PAGE — CALENDRIER
+   ============================================================ */
+
+.cal-layout {
+  display:               grid;
+  grid-template-columns: 1fr 320px;
+  gap:                   14px;
+  flex:                  1;
+  min-height:            0;
+}
+
+.cal-main {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
+  padding:       18px;
+  display:       flex;
+  flex-direction: column;
+}
+
+.cal-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  margin-bottom:   14px;
+}
+
+.cal-nav-btn {
+  width:         30px;
+  height:        30px;
+  border-radius: 7px;
+  border:        1px solid var(--border);
+  background:    var(--surface2);
+  color:         var(--text);
+  font-size:     14px;
+  cursor:        pointer;
+  transition:    all .2s;
+}
+
+.cal-nav-btn:hover {
+  border-color: var(--accent);
+  color:        var(--accent);
+}
+
+.cal-month-lbl {
+  font-family:    var(--font-mono);
+  font-size:      13px;
+  font-weight:    700;
+  letter-spacing: 2px;
+}
+
+.cal-weekdays {
+  display:               grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap:                   3px;
+  margin-bottom:         5px;
+}
+
+.cal-wd {
+  text-align:     center;
+  font-size:      9px;
+  letter-spacing: 2px;
+  color:          var(--muted);
+  padding:        3px 0;
+  font-family:    var(--font-mono);
+}
+
+.cal-days {
+  display:               grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap:                   3px;
+  flex:                  1;
+}
+
+.cal-day {
+  border-radius: 7px;
+  padding:       5px 3px;
+  cursor:        pointer;
+  transition:    all .15s;
+  min-height:    52px;
+  border:        1px solid transparent;
+  position:      relative;
+}
+
+.cal-day:hover {
+  background:   var(--surface2);
+  border-color: var(--border);
+}
+
+.cal-day.other-month .cal-day-num { opacity: .3; }
+
+.cal-day.today {
+  border-color: var(--accent) !important;
+  background:   rgba(79, 255, 176, .04);
+}
+
+.cal-day.selected {
+  background:   rgba(0, 191, 255, .07);
+  border-color: var(--accent2) !important;
+}
+
+.cal-day-num {
+  font-family:   var(--font-mono);
+  font-size:     10px;
+  color:         var(--muted);
+  display:       block;
+  margin-bottom: 3px;
+}
+
+.cal-day.today .cal-day-num {
+  color:       var(--accent);
+  font-weight: 700;
+}
+
+.cal-day-events {
+  display:        flex;
+  flex-direction: column;
+  gap:            2px;
+}
+
+.cal-ev-dot {
+  font-size:     8px;
+  border-radius: 3px;
+  padding:       1px 3px;
+  white-space:   nowrap;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+}
+
+/* Couleurs des événements */
+.ev-c0 { background: rgba(79, 255, 176, .15);  color: var(--accent);  }
+.ev-c1 { background: rgba(0, 191, 255, .15);   color: var(--accent2); }
+.ev-c2 { background: rgba(167, 139, 250, .15); color: var(--purple);  }
+.ev-c3 { background: rgba(255, 107, 53, .15);  color: var(--warn);    }
+
+/* Panneau latéral calendrier */
+.cal-side {
+  display:        flex;
+  flex-direction: column;
+  gap:            12px;
+}
+
+.cal-events-panel {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
+  padding:       16px;
+  flex:          1;
+  overflow-y:    auto;
+}
+
+.cal-sel-title {
+  font-family:    var(--font-mono);
+  font-size:      10px;
+  color:          var(--muted);
+  margin-bottom:  12px;
+  letter-spacing: 2px;
+}
+
+.ev-item {
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 9px;
+  padding:       9px 10px;
+  margin-bottom: 7px;
+}
+
+.ev-bar {
+  width:         3px;
+  height:        28px;
+  border-radius: 2px;
+  flex-shrink:   0;
+}
+
+.ev-info   { flex: 1; min-width: 0; }
+
+.ev-name {
+  font-size:     12px;
+  font-weight:   600;
+  white-space:   nowrap;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+}
+
+.ev-time {
+  font-size:  10px;
+  color:      var(--muted);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+.ev-del {
+  width:         22px;
+  height:        22px;
+  border-radius: 5px;
+  border:        1px solid var(--border);
+  background:    transparent;
+  color:         var(--muted);
+  font-size:     11px;
+  cursor:        pointer;
+  transition:    all .15s;
+  flex-shrink:   0;
+}
+
+.ev-del:hover {
+  border-color: var(--warn);
+  color:        var(--warn);
+  background:   rgba(255, 107, 53, .1);
+}
+
+.no-events {
+  font-size:  11px;
+  color:      var(--muted);
+  font-family: var(--font-mono);
+  text-align: center;
+  padding:    16px 0;
+}
+
+/* Formulaire ajout événement */
+.add-ev-card {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
+  padding:       16px;
+}
+
+.form-col  { display: flex; flex-direction: column; gap: 7px; }
+.form-row2 { display: flex; gap: 7px; }
+
+.fi {
+  width:         100%;
+  padding:       7px 10px;
+  border-radius: 7px;
+  border:        1px solid var(--border);
+  background:    var(--surface2);
+  color:         var(--text);
+  font-family:   var(--font-main);
+  font-size:     12px;
+  outline:       none;
+  transition:    border-color .2s;
+}
+
+.fi:focus       { border-color: var(--accent2); }
+.fi::placeholder { color: var(--muted); }
+
+.color-row { display: flex; gap: 6px; }
+
+.cp {
+  width:         20px;
+  height:        20px;
+  border-radius: 50%;
+  border:        2px solid transparent;
+  cursor:        pointer;
+  transition:    all .15s;
+}
+
+.cp.sel {
+  border-color: var(--text);
+  transform:    scale(1.25);
+}
+
+.add-btn-full {
+  width:          100%;
+  padding:        8px;
+  border-radius:  8px;
+  border:         1px solid var(--accent);
+  background:     rgba(79, 255, 176, .08);
+  color:          var(--accent);
+  font-family:    var(--font-mono);
+  font-size:      10px;
+  letter-spacing: 2px;
+  cursor:         pointer;
+  transition:     all .2s;
+}
+
+.add-btn-full:hover {
+  background: rgba(79, 255, 176, .18);
+}
+
+
+/* ============================================================
+   13. FLIP CLOCK (renderer.js / styles.css)
+   ============================================================ */
+
+.dashboard-clock {
+  width:           100%;
+  height:          100vh;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  background:      linear-gradient(135deg, #0f1b3d, #14285c);
+}
+
+.clock-wrapper {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            12px;
+}
+
+.clock-date {
+  font-size:      25px;
+  letter-spacing: 10px;
+  opacity:        0.35;
+  text-transform: uppercase;
+  font-family:    var(--font-main);
+  font-weight:    600;
+}
+
+.ampm {
+  font-size:      12px;
+  color:          #4da3ff;
+  letter-spacing: 5px;
+  font-weight:    600;
+  font-family:    var(--font-main);
+}
+
+.flip-clock {
+  display:     flex;
+  align-items: center;
+  gap:         16px;
+}
+
+.time-box {
+  width:           450px;
+  height:          400px;
+  background:      rgba(0, 0, 0, .4);
+  backdrop-filter: blur(20px);
+  color:           white;
+  font-size:       130px;
+  font-weight:     900;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  border-radius:   20px;
+  overflow:        hidden;
+  box-shadow:      0 10px 40px rgba(0, 0, 0, .4);
+  position:        relative;
+}
+
+.time-box::after {
+  content:    "";
+  position:   absolute;
+  top:        50%;
+  left:       0;
+  width:      100%;
+  height:     2px;
+  background: rgba(255, 255, 255, .08);
+}
+
+.time-box .d1 {
+  font-size:   245px;
+  font-weight: 900;
+  opacity:     0.7;
+}
+
+.time-box .d2 {
+  font-size:   245px;
+  font-weight: 900;
+}
+
+.time-sep {
+  display:        flex;
+  flex-direction: column;
+  gap:            30px;
+  animation:      blink 1s step-end infinite;
+}
+
+.time-sep::before,
+.time-sep::after {
+  content:       '';
+  width:         12px;
+  height:        12px;
+  border-radius: 50%;
+  background:    #4da3ff;
+  opacity:       0.8;
+}
+
+.clock-stats {
+  display:    flex;
+  gap:        60px;
+  margin-top: 24px;
+}
+
+.clock-stat { text-align: center; }
+
+.clock-stat .val {
+  font-size:   22px;
+  font-weight: 700;
+  color:       #4da3ff;
+  font-family: var(--font-main);
+}
+
+.clock-stat .lbl {
+  font-size:      10px;
+  opacity:        0.35;
+  letter-spacing: 2px;
+  margin-top:     5px;
+  font-family:    var(--font-main);
+  text-transform: uppercase;
+}
+
+
+/* ============================================================
+   14. RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+  .dash-grid {
+    grid-template-columns: 220px 1fr 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .dash-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+  }
+
+  .dc-clock {
+    grid-column: 1 / 3;
+    grid-row:    auto;
+  }
+
+  .cal-layout,
+  .weather-hero,
+  .devices-section-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .energy-top {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --sidebar: 52px;
+    --topbar:  46px;
+  }
+
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dc-clock { grid-column: 1; }
+
+  .energy-top {
+    grid-template-columns: 1fr;
+  }
+
+  .dc-weather-stats,
+  .dc-lights-grid,
+  .dc-energy-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

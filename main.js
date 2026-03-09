@@ -3,11 +3,6 @@ const path = require('path');
 
 let mainWindow;
 
-ipcMain.on('open-external', (event, url) => {
-    shell.openExternal(url);
-});
-
-
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1600,
