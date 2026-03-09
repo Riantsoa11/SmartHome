@@ -1,27 +1,50 @@
+/**
+ * SettingsViewModel — Gestion des appareils personnalisés
+ */
+
+import EventBus from "../services/EventBus.js";
+
 export default class SettingsViewModel {
 
-  saveHAConfig(url, token) {
+constructor(){
 
-    localStorage.setItem("ha_url", url);
-    localStorage.setItem("ha_token", token);
+this._devices =
+JSON.parse(localStorage.getItem("custom_devices") || "[]");
 
-  }
+}
 
-  addDevice(device) {
+get devices(){
+return this._devices;
+}
 
-    const devices =
-      JSON.parse(localStorage.getItem("ha_devices") || "[]");
+addDevice(device){
 
-    devices.push(device);
+if(!device.name || !device.entity) return false;
 
-    localStorage.setItem("ha_devices", JSON.stringify(devices));
+this._devices.push(device);
 
-  }
+localStorage.setItem(
+"custom_devices",
+JSON.stringify(this._devices)
+);
 
-  getDevices() {
+EventBus.emit("devices:custom-updated");
 
-    return JSON.parse(localStorage.getItem("ha_devices") || "[]");
+return true;
 
-  }
+}
+
+deleteDevice(index){
+
+this._devices.splice(index,1);
+
+localStorage.setItem(
+"custom_devices",
+JSON.stringify(this._devices)
+);
+
+EventBus.emit("devices:custom-updated");
+
+}
 
 }
