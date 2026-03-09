@@ -4,9 +4,10 @@
   "description": "Application Desktop SmartHome en Electron (MVVM)",
   "main": "main.js",
   "scripts": {
-  "start": "electron ."
+    "start": "electron .",
+    "dev": "electron .",
+    "build": "electron-builder"
   },
-
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Riantsoa11/SmartHome.git"
@@ -20,6 +21,7 @@
   },
   "homepage": "https://github.com/Riantsoa11/SmartHome#readme",
   "devDependencies": {
-    "electron": "^40.4.1"
+    "electron": "^40.8.0"
   }
+  
 }
