@@ -105,6 +105,9 @@ L'application utilise le pattern **MVVM (Model View ViewModel)** pour séparer c
 └── 📁 assets/              # Ressources statiques
 ```
 
+Voici le diagramme de classe du projet
+![alt text](mermaid-diagram.png)
+
 ### Communication Inter-Processus
 
 - **IPC (Inter-Process Communication)** pour la communication sécurisée
